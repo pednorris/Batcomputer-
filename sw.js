@@ -1,21 +1,27 @@
-const CACHE_NAME = 'bat-cache-v1';
-const ASSETS = [
-  './',
-  './index.html',
-  './manifest.json',
-  'https://v.giphy.com/media/v1.Y2lkPTc5MGI3NjExM2JxeG9qM2R0YnR0YmZ0YmZ0YmZ0YmZ0YmZ0YmZ0YmZ0YmZ0JmVwPXYxX2ludGVybmFsX2dpZl9ieV9pZCZjdD12/9u1fQYQG2I5z2/giphy.mp4',
-  'https://i.imgur.com/B70pGfK.png',
-  'https://i.imgur.com/2Xy5s6a.png'
-];
+const CACHE = 'batcomputer-v1';
+const ASSETS = ['./index.html', './manifest.json'];
 
-self.addEventListener('install', (e) => {
-  e.waitUntil(
-    caches.open(CACHE_NAME).then((cache) => cache.addAll(ASSETS))
-  );
+self.addEventListener('install', e => {
+  e.waitUntil(caches.open(CACHE).then(c => c.addAll(ASSETS)));
+  self.skipWaiting();
 });
 
-self.addEventListener('fetch', (e) => {
+self.addEventListener('activate', e => {
+  e.waitUntil(caches.keys().then(keys =>
+    Promise.all(keys.filter(k => k !== CACHE).map(k => caches.delete(k)))
+  ));
+  self.clients.claim();
+});
+
+self.addEventListener('fetch', e => {
+  if (e.request.method !== 'GET') return;
   e.respondWith(
-    caches.match(e.request).then((res) => res || fetch(e.request))
+    caches.match(e.request).then(cached => {
+      const net = fetch(e.request).then(res => {
+        if (res.ok) caches.open(CACHE).then(c => c.put(e.request, res.clone()));
+        return res;
+      }).catch(() => cached);
+      return cached || net;
+    })
   );
 });

@@ -1,0 +1,3105 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="BatIA">
+  <meta name="theme-color" content="#00ffcc">
+  <title>BatComputer - BatIA</title>
+  <link rel="manifest" href="manifest.json">
+  <link rel="apple-touch-icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'><rect width='64' height='64' fill='%23010108'/><ellipse cx='32' cy='32' rx='12' ry='9' fill='%2300ffcc'/><polygon points='32,20 8,8 14,28' fill='%2300ffcc'/><polygon points='32,20 56,8 50,28' fill='%2300ffcc'/><polygon points='8,8 2,16 14,20' fill='%2300ffcc'/><polygon points='56,8 62,16 50,20' fill='%2300ffcc'/><polygon points='20,28 14,38 26,32' fill='%2300ffcc'/><polygon points='44,28 50,38 38,32' fill='%2300ffcc'/></svg>">
+  <style>
+    :root {
+      --bat-bg: #010108;
+      --bat-panel: rgba(8, 10, 24, 0.98);
+      --bat-border: #00ffcc;
+      --bat-text: #00ffce;
+      --bat-dim: #004438;
+      --bat-gold: #ffcc00;
+      --bat-red: #ff3333;
+      --bat-gray: #1a1a2e;
+      --bat-white: #f0fffb;
+      --bat-purple: #9944ff;
+      --font: 'Courier New', 'Lucida Console', monospace;
+      --font-title: 'Arial Black', 'Impact', sans-serif;
+      --glow: 0 0 10px var(--bat-text), 0 0 25px rgba(0, 255, 206, 0.4);
+      --glow-gold: 0 0 10px var(--bat-gold), 0 0 25px rgba(255, 204, 0, 0.35);
+      --glow-red: 0 0 10px var(--bat-red), 0 0 25px rgba(255, 51, 51, 0.4);
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    body {
+      background: var(--bat-bg);
+      color: var(--bat-text);
+      font-family: var(--font);
+      height: 100dvh;
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+      user-select: none;
+    }
+
+    #stars-canvas {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      pointer-events: none;
+      z-index: 0;
+    }
+
+    #stars {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      pointer-events: none;
+      z-index: 0;
+    }
+
+    .star {
+      position: absolute;
+      width: 2px;
+      height: 2px;
+      background: var(--bat-text);
+      border-radius: 50%;
+      animation: fall linear infinite;
+      opacity: 0.7;
+    }
+
+    @keyframes fall {
+      from {
+        transform: translateY(-10px);
+      }
+
+      to {
+        transform: translateY(100vh);
+      }
+    }
+
+    #header {
+      position: relative;
+      z-index: 10;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 8px 14px;
+      background: linear-gradient(180deg, rgba(0, 10, 30, 0.98) 0%, rgba(2, 2, 16, 0.98) 100%);
+      border-bottom: 1px solid var(--bat-border);
+      box-shadow: 0 2px 20px rgba(0, 255, 200, 0.15);
+      flex-shrink: 0;
+    }
+
+    #header h1 {
+      font-family: var(--font-title);
+      font-size: 13px;
+      letter-spacing: 3px;
+      color: var(--bat-text);
+      text-shadow: var(--glow);
+      font-weight: 900;
+    }
+
+    #clock {
+      font-size: 11px;
+      color: var(--bat-text);
+      letter-spacing: 2px;
+      text-shadow: 0 0 6px var(--bat-text);
+      font-family: var(--font-title);
+    }
+
+    #bat-logo {
+      width: 34px;
+      height: 34px;
+      animation: logoPulse 3s ease-in-out infinite;
+    }
+
+    @keyframes logoPulse {
+
+      0%,
+      100% {
+        filter: drop-shadow(0 0 5px #00ffcc) drop-shadow(0 0 10px rgba(0, 255, 200, 0.3));
+      }
+
+      50% {
+        filter: drop-shadow(0 0 16px #00ffcc) drop-shadow(0 0 32px rgba(0, 255, 200, 0.5));
+      }
+    }
+
+    #main {
+      position: relative;
+      z-index: 5;
+      flex: 1;
+      overflow: hidden;
+    }
+
+    .window {
+      position: absolute;
+      background: linear-gradient(160deg, rgba(8, 8, 28, 0.98) 0%, rgba(4, 4, 18, 0.99) 100%);
+      border: 1px solid rgba(0, 255, 200, 0.5);
+      border-radius: 12px;
+      display: flex;
+      flex-direction: column;
+      box-shadow: 0 0 30px rgba(0, 255, 200, 0.12), inset 0 1px 0 rgba(0, 255, 200, 0.1);
+      min-width: 280px;
+      min-height: 200px;
+      backdrop-filter: blur(4px);
+      animation: winOpen 0.35s cubic-bezier(.2, .8, .4, 1) both;
+    }
+
+    .window.closing {
+      animation: winClose 0.25s ease-in both;
+    }
+
+    .window.focused {
+      box-shadow: 0 0 35px rgba(0, 255, 200, 0.25), 0 0 70px rgba(0, 255, 200, 0.08), inset 0 1px 0 rgba(0, 255, 200, 0.15);
+      border-color: rgba(0, 255, 200, 0.7);
+    }
+
+    .window.maximized {
+      inset: 0 !important;
+      width: 100vw !important;
+      height: 100% !important;
+      margin: 0 !important;
+      left: 0 !important;
+      top: 0 !important;
+      border-radius: 0 !important;
+      z-index: 10000 !important;
+    }
+
+    @keyframes winOpen {
+      0% {
+        opacity: 0;
+        transform: scale(0.72) translateY(28px);
+        filter: brightness(2);
+      }
+
+      70% {
+        opacity: 1;
+        transform: scale(1.03) translateY(-3px);
+      }
+
+      100% {
+        opacity: 1;
+        transform: scale(1) translateY(0);
+        filter: brightness(1);
+      }
+    }
+
+    @keyframes winClose {
+      0% {
+        opacity: 1;
+        transform: scale(1);
+      }
+
+      100% {
+        opacity: 0;
+        transform: scale(0.6) translateY(40px);
+      }
+    }
+
+    .window-bar {
+      display: flex;
+      align-items: center;
+      padding: 8px 10px 8px 14px;
+      background: linear-gradient(90deg, rgba(0, 255, 200, 0.1) 0%, rgba(0, 100, 80, 0.05) 100%);
+      border-bottom: 1px solid rgba(0, 255, 200, 0.2);
+      border-radius: 12px 12px 0 0;
+      cursor: grab;
+      flex-shrink: 0;
+      gap: 6px;
+      touch-action: none;
+      min-height: 58px;
+    }
+
+    .window-bar:active {
+      cursor: grabbing;
+    }
+
+    .win-title {
+      flex: 1;
+      font-size: 11px;
+      letter-spacing: 3px;
+      color: var(--bat-text);
+      font-family: var(--font-title);
+      text-shadow: 0 0 6px var(--bat-text);
+    }
+
+    .btn-win {
+      width: 44px;
+      height: 44px;
+      border-radius: 10px;
+      border: 2px solid;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 18px;
+      cursor: pointer;
+      flex-shrink: 0;
+      touch-action: manipulation;
+      font-weight: bold;
+      transition: all 0.15s;
+      position: relative;
+    }
+
+    .btn-win::before {
+      content: '';
+      position: absolute;
+      inset: -8px;
+      border-radius: 14px;
+    }
+
+    .btn-close {
+      border-color: var(--bat-red);
+      color: var(--bat-red);
+      background: rgba(255, 51, 51, 0.08);
+      box-shadow: 0 0 8px rgba(255, 51, 51, 0.2);
+    }
+
+    .btn-close:active {
+      background: var(--bat-red);
+      color: white;
+      transform: scale(0.88);
+    }
+
+    .btn-min {
+      border-color: var(--bat-gold);
+      color: var(--bat-gold);
+      background: rgba(255, 204, 0, 0.08);
+      box-shadow: 0 0 8px rgba(255, 204, 0, 0.2);
+    }
+
+    .btn-min:active {
+      background: var(--bat-gold);
+      color: black;
+      transform: scale(0.88);
+    }
+
+    .btn-max {
+      border-color: rgba(0, 255, 200, 0.5);
+      color: var(--bat-text);
+      background: rgba(0, 255, 200, 0.05);
+    }
+
+    .btn-max:active {
+      background: rgba(0, 255, 200, 0.2);
+      transform: scale(0.88);
+    }
+
+    .window-body {
+      flex: 1;
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+      padding: 12px;
+    }
+
+    #taskbar {
+      position: relative;
+      z-index: 10;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      padding: 6px 10px;
+      background: rgba(2, 2, 16, 0.99);
+      border-top: 1px solid rgba(0, 255, 200, 0.3);
+      overflow-x: auto;
+      flex-shrink: 0;
+      min-height: 48px;
+    }
+
+    .taskbar-btn {
+      flex-shrink: 0;
+      padding: 5px 12px;
+      background: rgba(0, 255, 200, 0.08);
+      border: 1px solid rgba(0, 255, 200, 0.25);
+      border-radius: 6px;
+      color: var(--bat-text);
+      font-family: var(--font);
+      font-size: 10px;
+      cursor: pointer;
+      letter-spacing: 1px;
+      touch-action: manipulation;
+      transition: all 0.2s;
+      animation: tbSlide 0.22s cubic-bezier(.2, .8, .4, 1) both;
+    }
+
+    .taskbar-btn:active {
+      background: rgba(0, 255, 200, 0.3);
+      transform: scale(0.94);
+    }
+
+    .taskbar-btn.minimized {
+      border-color: rgba(255, 204, 0, 0.5);
+      color: var(--bat-gold);
+    }
+
+    @keyframes tbSlide {
+      from {
+        opacity: 0;
+        transform: translateY(12px) scale(0.9);
+      }
+
+      to {
+        opacity: 1;
+        transform: translateY(0) scale(1);
+      }
+    }
+
+    #dock-wrap {
+      position: relative;
+      z-index: 10;
+      background: linear-gradient(180deg, rgba(3, 3, 14, 0.99) 0%, rgba(2, 2, 10, 0.99) 100%);
+      border-top: 1px solid rgba(0, 255, 200, 0.2);
+      flex-shrink: 0;
+    }
+
+    .dock-page {
+      display: flex;
+      justify-content: center;
+      gap: 10px;
+      padding: 7px 50px 7px 8px;
+      flex-wrap: wrap;
+      transition: opacity 0.35s cubic-bezier(.2, .8, .4, 1), transform 0.35s cubic-bezier(.2, .8, .4, 1);
+    }
+
+    .dock-page.hidden-left {
+      opacity: 0;
+      transform: translateX(-50px);
+      pointer-events: none;
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+    }
+
+    .dock-page.hidden-right {
+      opacity: 0;
+      transform: translateX(50px);
+      pointer-events: none;
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+    }
+
+    #dock-arrow {
+      position: absolute;
+      right: 8px;
+      top: 50%;
+      transform: translateY(-50%);
+      background: rgba(0, 255, 200, 0.1);
+      border: 1px solid rgba(0, 255, 200, 0.4);
+      border-radius: 8px;
+      color: var(--bat-text);
+      font-size: 16px;
+      padding: 8px 11px;
+      cursor: pointer;
+      touch-action: manipulation;
+      z-index: 5;
+      transition: all 0.25s;
+    }
+
+    #dock-arrow:active {
+      background: rgba(0, 255, 200, 0.3);
+      transform: translateY(-50%) scale(0.9);
+    }
+
+    .dock-btn {
+      padding: 9px 16px;
+      background: linear-gradient(135deg, rgba(0, 255, 200, 0.08) 0%, rgba(0, 100, 80, 0.05) 100%);
+      border: 1px solid rgba(0, 255, 200, 0.4);
+      border-radius: 8px;
+      color: var(--bat-text);
+      font-family: var(--font);
+      font-size: 12px;
+      cursor: pointer;
+      letter-spacing: 1px;
+      touch-action: manipulation;
+      text-shadow: 0 0 8px var(--bat-text);
+      box-shadow: 0 0 10px rgba(0, 255, 200, 0.05), inset 0 1px 0 rgba(0, 255, 200, 0.1);
+      transition: all 0.18s;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .dock-btn:active {
+      background: rgba(0, 255, 200, 0.2);
+      transform: scale(0.93);
+    }
+
+    .calc-display {
+      background: linear-gradient(180deg, #000 0%, #050510 100%);
+      border: 1px solid rgba(0, 255, 200, 0.25);
+      border-radius: 8px;
+      padding: 10px 12px;
+      margin-bottom: 10px;
+      min-height: 66px;
+      box-shadow: inset 0 2px 8px rgba(0, 0, 0, 0.5);
+    }
+
+    .calc-expr {
+      font-size: 12px;
+      color: var(--bat-dim);
+      min-height: 18px;
+      word-break: break-all;
+      letter-spacing: 1px;
+    }
+
+    .calc-result {
+      font-size: 26px;
+      color: var(--bat-white);
+      text-align: right;
+      min-height: 32px;
+      text-shadow: 0 0 10px rgba(0, 255, 200, 0.4);
+      font-family: var(--font-title);
+    }
+
+    .calc-grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 7px;
+      flex: 1;
+    }
+
+    .calc-btn {
+      background: linear-gradient(160deg, rgba(0, 40, 50, 0.9) 0%, rgba(0, 20, 30, 0.9) 100%);
+      border: 1px solid rgba(0, 255, 200, 0.2);
+      border-radius: 8px;
+      color: var(--bat-white);
+      font-family: var(--font);
+      font-size: 17px;
+      cursor: pointer;
+      padding: 13px 4px;
+      touch-action: manipulation;
+      transition: all 0.12s;
+    }
+
+    .calc-btn:active {
+      background: rgba(0, 255, 200, 0.25);
+      transform: scale(0.92);
+    }
+
+    .calc-btn.op {
+      color: var(--bat-text);
+      border-color: rgba(0, 255, 200, 0.4);
+      background: linear-gradient(160deg, rgba(0, 60, 50, 0.9), rgba(0, 30, 25, 0.9));
+    }
+
+    .calc-btn.eq {
+      background: linear-gradient(160deg, rgba(0, 80, 60, 0.9), rgba(0, 50, 40, 0.9));
+      border-color: var(--bat-border);
+      color: var(--bat-text);
+    }
+
+    .calc-btn.cl {
+      color: var(--bat-red);
+      border-color: rgba(255, 51, 51, 0.4);
+      background: linear-gradient(160deg, rgba(60, 0, 0, 0.9), rgba(30, 0, 0, 0.9));
+    }
+
+    .notes-area {
+      flex: 1;
+      background: rgba(0, 0, 0, 0.8);
+      border: 1px solid rgba(0, 255, 200, 0.2);
+      border-radius: 8px;
+      color: var(--bat-text);
+      font-family: var(--font);
+      font-size: 14px;
+      padding: 10px;
+      resize: none;
+      outline: none;
+      width: 100%;
+      line-height: 1.6;
+    }
+
+    .notes-area::placeholder {
+      color: var(--bat-dim);
+    }
+
+    .terminal-output {
+      flex: 1;
+      background: rgba(0, 0, 0, 0.85);
+      border: 1px solid rgba(0, 255, 200, 0.2);
+      border-radius: 8px;
+      padding: 10px;
+      overflow-y: auto;
+      font-size: 13px;
+      line-height: 1.6;
+      margin-bottom: 8px;
+    }
+
+    .terminal-output .msg-user {
+      color: var(--bat-gold);
+      margin-bottom: 4px;
+    }
+
+    .terminal-output .msg-ia {
+      color: var(--bat-text);
+      margin-bottom: 12px;
+      white-space: pre-wrap;
+    }
+
+    .terminal-output .msg-sys {
+      color: var(--bat-dim);
+      font-size: 11px;
+      margin-bottom: 6px;
+      letter-spacing: 1px;
+    }
+
+    .terminal-input-row {
+      display: flex;
+      gap: 8px;
+      flex-shrink: 0;
+    }
+
+    .terminal-input {
+      flex: 1;
+      background: rgba(0, 0, 0, 0.8);
+      border: 1px solid rgba(0, 255, 200, 0.4);
+      border-radius: 8px;
+      color: var(--bat-white);
+      font-family: var(--font);
+      font-size: 13px;
+      padding: 10px;
+      outline: none;
+      transition: border-color 0.2s, box-shadow 0.2s;
+    }
+
+    .terminal-input:focus {
+      border-color: var(--bat-text);
+      box-shadow: 0 0 12px rgba(0, 255, 200, 0.2);
+    }
+
+    .terminal-send {
+      padding: 10px 16px;
+      background: linear-gradient(135deg, rgba(0, 255, 200, 0.12) 0%, rgba(0, 100, 80, 0.08) 100%);
+      border: 1px solid rgba(0, 255, 200, 0.4);
+      border-radius: 8px;
+      color: var(--bat-text);
+      font-family: var(--font);
+      font-size: 13px;
+      cursor: pointer;
+      touch-action: manipulation;
+      transition: all 0.15s;
+    }
+
+    .terminal-send:active {
+      background: rgba(0, 255, 200, 0.3);
+      transform: scale(0.95);
+    }
+
+    @keyframes blink {
+
+      0%,
+      100% {
+        opacity: 1
+      }
+
+      50% {
+        opacity: 0
+      }
+    }
+
+    .typing-dot {
+      display: inline-block;
+      animation: blink 1s infinite;
+    }
+
+    .radar-wrap {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      flex: 1;
+      overflow-y: auto;
+    }
+
+    .status-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 8px 10px;
+      background: linear-gradient(90deg, rgba(0, 255, 200, 0.04) 0%, rgba(0, 50, 40, 0.03) 100%);
+      border: 1px solid rgba(0, 255, 200, 0.15);
+      border-left: 2px solid rgba(0, 255, 200, 0.4);
+      border-radius: 4px;
+      font-size: 12px;
+    }
+
+    .status-label {
+      color: var(--bat-dim);
+      letter-spacing: 1px;
+    }
+
+    .status-val {
+      color: var(--bat-text);
+      font-weight: bold;
+    }
+
+    .status-ok {
+      color: #00ff88;
+      text-shadow: 0 0 6px #00ff88;
+    }
+
+    #welcome {
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 14px;
+      padding: 20px;
+      text-align: center;
+      z-index: 1;
+    }
+
+    #welcome h2 {
+      font-family: var(--font-title);
+      font-size: 20px;
+      letter-spacing: 5px;
+      color: var(--bat-text);
+      text-shadow: var(--glow);
+      animation: pulse 2s infinite;
+      font-weight: 900;
+    }
+
+    @keyframes pulse {
+
+      0%,
+      100% {
+        text-shadow: 0 0 10px var(--bat-text), 0 0 20px rgba(0, 255, 200, 0.3)
+      }
+
+      50% {
+        text-shadow: 0 0 30px var(--bat-text), 0 0 60px rgba(0, 255, 200, 0.4)
+      }
+    }
+
+    #welcome p {
+      font-size: 12px;
+      color: var(--bat-dim);
+      letter-spacing: 2px;
+      max-width: 300px;
+    }
+
+    .bat-svg {
+      fill: var(--bat-text);
+      filter: drop-shadow(0 0 14px var(--bat-text)) drop-shadow(0 0 28px rgba(0, 255, 200, 0.4));
+      animation: batFloat 3s ease-in-out infinite;
+    }
+
+    @keyframes batFloat {
+
+      0%,
+      100% {
+        transform: translateY(0)
+      }
+
+      50% {
+        transform: translateY(-8px)
+      }
+    }
+
+    ::-webkit-scrollbar {
+      width: 3px;
+    }
+
+    ::-webkit-scrollbar-track {
+      background: transparent;
+    }
+
+    ::-webkit-scrollbar-thumb {
+      background: rgba(0, 255, 200, 0.3);
+      border-radius: 2px;
+    }
+
+    .agenda-form {
+      display: flex;
+      flex-direction: column;
+      gap: 7px;
+      margin-bottom: 10px;
+      flex-shrink: 0;
+    }
+
+    .agenda-input {
+      background: rgba(0, 0, 0, 0.8);
+      border: 1px solid rgba(0, 255, 200, 0.35);
+      border-radius: 8px;
+      color: var(--bat-white);
+      font-family: var(--font);
+      font-size: 13px;
+      padding: 9px;
+      outline: none;
+      width: 100%;
+    }
+
+    .agenda-input:focus {
+      border-color: var(--bat-text);
+      box-shadow: 0 0 10px rgba(0, 255, 200, 0.2);
+    }
+
+    .agenda-input::placeholder {
+      color: var(--bat-dim);
+    }
+
+    .agenda-input[type="datetime-local"]::-webkit-calendar-picker-indicator {
+      filter: invert(1) hue-rotate(120deg);
+    }
+
+    .agenda-list {
+      flex: 1;
+      overflow-y: auto;
+      display: flex;
+      flex-direction: column;
+      gap: 7px;
+    }
+
+    .agenda-item {
+      background: linear-gradient(135deg, rgba(0, 255, 200, 0.05) 0%, rgba(0, 40, 30, 0.05) 100%);
+      border: 1px solid rgba(0, 255, 200, 0.2);
+      border-radius: 8px;
+      padding: 10px 12px;
+      display: flex;
+      flex-direction: column;
+      gap: 3px;
+      position: relative;
+    }
+
+    .agenda-missao {
+      font-size: 13px;
+      color: var(--bat-white);
+      font-weight: bold;
+    }
+
+    .agenda-hora {
+      font-size: 11px;
+      color: var(--bat-dim);
+      letter-spacing: 1px;
+    }
+
+    .agenda-del {
+      position: absolute;
+      top: 8px;
+      right: 8px;
+      background: rgba(255, 51, 51, 0.1);
+      border: 1px solid rgba(255, 51, 51, 0.3);
+      border-radius: 6px;
+      color: var(--bat-red);
+      font-size: 14px;
+      cursor: pointer;
+      touch-action: manipulation;
+      padding: 4px 8px;
+    }
+
+    .agenda-del:active {
+      background: var(--bat-red);
+      color: white;
+    }
+
+    .hist-list {
+      flex: 1;
+      overflow-y: auto;
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+    }
+
+    .hist-item {
+      background: rgba(0, 255, 200, 0.03);
+      border-left: 2px solid rgba(0, 255, 200, 0.3);
+      padding: 7px 10px;
+      font-size: 12px;
+      border-radius: 0 6px 6px 0;
+    }
+
+    .hist-time {
+      color: var(--bat-dim);
+      font-size: 10px;
+      letter-spacing: 1px;
+    }
+
+    .resize-handle {
+      position: absolute;
+      bottom: 0;
+      right: 0;
+      width: 24px;
+      height: 24px;
+      cursor: se-resize;
+      touch-action: none;
+    }
+
+    .resize-handle::after {
+      content: '';
+      position: absolute;
+      bottom: 5px;
+      right: 5px;
+      width: 10px;
+      height: 10px;
+      border-right: 2px solid rgba(0, 255, 200, 0.4);
+      border-bottom: 2px solid rgba(0, 255, 200, 0.4);
+    }
+
+    #flash-overlay {
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: rgba(0, 255, 200, 0.06);
+      pointer-events: none;
+      z-index: 9999;
+      opacity: 0;
+    }
+
+    #flash-overlay.flash {
+      animation: screenFlash 0.4s ease-out forwards;
+    }
+
+    @keyframes screenFlash {
+      0% {
+        opacity: 0.6
+      }
+
+      100% {
+        opacity: 0
+      }
+    }
+
+    #alarm-overlay {
+      display: none;
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: radial-gradient(ellipse at center, rgba(20, 12, 0, 0.97) 0%, rgba(5, 5, 20, 0.98) 100%);
+      z-index: 9000;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 22px;
+      text-align: center;
+    }
+
+    #alarm-overlay.active {
+      display: flex;
+      animation: alarmBg 0.8s infinite;
+    }
+
+    @keyframes alarmBg {
+
+      0%,
+      100% {
+        background: radial-gradient(ellipse at center, rgba(30, 15, 0, 0.97) 0%, rgba(5, 5, 20, 0.98) 100%)
+      }
+
+      50% {
+        background: radial-gradient(ellipse at center, rgba(50, 25, 0, 0.97) 0%, rgba(5, 5, 20, 0.98) 100%)
+      }
+    }
+
+    #alarm-overlay svg {
+      animation: alarmBat 0.8s ease-in-out infinite;
+    }
+
+    @keyframes alarmBat {
+
+      0%,
+      100% {
+        transform: scale(1) rotate(-6deg);
+        filter: drop-shadow(0 0 14px var(--bat-gold))
+      }
+
+      50% {
+        transform: scale(1.2) rotate(6deg);
+        filter: drop-shadow(0 0 40px var(--bat-gold))
+      }
+    }
+
+    #alarm-title {
+      font-family: var(--font-title);
+      font-size: 22px;
+      letter-spacing: 4px;
+      color: var(--bat-gold);
+      text-shadow: var(--glow-gold);
+      font-weight: 900;
+    }
+
+    #alarm-nome {
+      font-size: 14px;
+      color: var(--bat-white);
+      letter-spacing: 1px;
+    }
+
+    #alarm-stop {
+      padding: 16px 44px;
+      background: linear-gradient(135deg, var(--bat-gold), #ff9900);
+      color: #000;
+      border: 2px solid var(--bat-gold);
+      border-radius: 10px;
+      font-family: var(--font-title);
+      font-size: 14px;
+      font-weight: bold;
+      cursor: pointer;
+      touch-action: manipulation;
+      letter-spacing: 2px;
+    }
+
+    #scan-line {
+      position: fixed;
+      left: 0;
+      right: 0;
+      height: 2px;
+      background: linear-gradient(90deg, transparent 0%, rgba(0, 255, 200, 0.5) 30%, rgba(0, 255, 200, 0.8) 50%, rgba(0, 255, 200, 0.5) 70%, transparent 100%);
+      pointer-events: none;
+      z-index: 1;
+      animation: scanLine 7s linear infinite;
+    }
+
+    @keyframes scanLine {
+      0% {
+        top: -2px;
+        opacity: 0
+      }
+
+      5% {
+        opacity: 1
+      }
+
+      95% {
+        opacity: 1
+      }
+
+      100% {
+        top: 100%;
+        opacity: 0
+      }
+    }
+
+    body::before {
+      content: " ";
+      display: block;
+      position: fixed;
+      top: 0;
+      left: 0;
+      bottom: 0;
+      right: 0;
+      background: linear-gradient(rgba(18, 16, 16, 0) 50%, rgba(0, 0, 0, 0.25) 50%), linear-gradient(90deg, rgba(255, 0, 0, 0.06), rgba(0, 255, 0, 0.02), rgba(0, 0, 255, 0.06));
+      z-index: 9999;
+      background-size: 100% 3px, 3px 100%;
+      pointer-events: none;
+    }
+
+    #bat-signal {
+      position: fixed;
+      bottom: -60px;
+      right: -60px;
+      width: 280px;
+      height: 280px;
+      border-radius: 50%;
+      border: 1px solid rgba(0, 255, 200, 0.08);
+      pointer-events: none;
+      z-index: 0;
+      animation: batSignalRotate 40s linear infinite;
+    }
+
+    @keyframes batSignalRotate {
+      from {
+        transform: rotate(0deg)
+      }
+
+      to {
+        transform: rotate(360deg)
+      }
+    }
+
+    .ripple-ring {
+      position: absolute;
+      border-radius: 50%;
+      background: rgba(0, 255, 200, 0.45);
+      width: 40px;
+      height: 40px;
+      margin-left: -20px;
+      margin-top: -20px;
+      pointer-events: none;
+      animation: ripple 0.55s linear;
+    }
+
+    @keyframes ripple {
+      0% {
+        transform: scale(0);
+        opacity: 0.7
+      }
+
+      100% {
+        transform: scale(4.5);
+        opacity: 0
+      }
+    }
+
+    .dcgame-wrap {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 10px;
+      flex: 1;
+      overflow-y: auto;
+      padding: 4px 0;
+    }
+
+    .dcgame-category {
+      font-size: 10px;
+      letter-spacing: 3px;
+      color: var(--bat-dim);
+      text-transform: uppercase;
+      font-family: var(--font-title);
+    }
+
+    .dcgame-hint {
+      font-size: 13px;
+      color: var(--bat-gold);
+      text-align: center;
+      padding: 8px 10px;
+      line-height: 1.6;
+      background: rgba(255, 204, 0, 0.05);
+      border: 1px solid rgba(255, 204, 0, 0.2);
+      border-radius: 8px;
+      width: 100%;
+    }
+
+    .dcgame-blanks {
+      display: flex;
+      gap: 5px;
+      flex-wrap: wrap;
+      justify-content: center;
+      margin: 4px 0;
+    }
+
+    .dcgame-letter {
+      width: 30px;
+      height: 38px;
+      background: rgba(0, 0, 0, 0.7);
+      border-bottom: 2px solid var(--bat-border);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 18px;
+      font-weight: bold;
+      color: var(--bat-white);
+      border-radius: 4px 4px 0 0;
+      transition: all 0.25s;
+      font-family: var(--font-title);
+    }
+
+    .dcgame-letter.revealed {
+      background: rgba(0, 255, 200, 0.1);
+      border-color: var(--bat-gold);
+      color: var(--bat-gold);
+      animation: letterPop 0.3s cubic-bezier(.2, .8, .4, 1);
+    }
+
+    @keyframes letterPop {
+      0% {
+        transform: scale(0.5) translateY(5px)
+      }
+
+      70% {
+        transform: scale(1.15) translateY(-2px)
+      }
+
+      100% {
+        transform: scale(1) translateY(0)
+      }
+    }
+
+    .dcgame-keyboard {
+      display: grid;
+      grid-template-columns: repeat(9, 1fr);
+      gap: 4px;
+      width: 100%;
+    }
+
+    .dcgame-key {
+      background: linear-gradient(160deg, rgba(0, 40, 50, 0.9), rgba(0, 20, 30, 0.9));
+      border: 1px solid rgba(0, 255, 200, 0.2);
+      border-radius: 5px;
+      color: var(--bat-white);
+      font-family: var(--font);
+      font-size: 13px;
+      padding: 11px 2px;
+      cursor: pointer;
+      touch-action: manipulation;
+      transition: all 0.14s;
+    }
+
+    .dcgame-key:active {
+      transform: scale(0.86);
+    }
+
+    .dcgame-key.correct {
+      background: rgba(0, 255, 200, 0.18);
+      border-color: var(--bat-text);
+      color: var(--bat-text);
+    }
+
+    .dcgame-key.missed {
+      background: rgba(255, 51, 51, 0.12);
+      border-color: rgba(255, 51, 51, 0.4);
+      color: var(--bat-red);
+      text-decoration: line-through;
+    }
+
+    .dcgame-lives {
+      display: flex;
+      gap: 5px;
+      font-size: 18px;
+    }
+
+    /* PAYWALL */
+    #paywall,
+    #pix-screen {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100vw;
+      height: 100vh;
+      background: #000;
+      z-index: 9999999;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: flex-start;
+      padding: 50px 20px;
+      overflow-y: auto;
+      color: #fff;
+      gap: 16px;
+    }
+
+    #pix-screen {
+      display: none;
+    }
+
+    .pay-btn {
+      width: 100%;
+      max-width: 320px;
+      padding: 16px;
+      background: linear-gradient(135deg, #00ffcc, #00cc99);
+      color: #000;
+      border: none;
+      border-radius: 12px;
+      font-family: 'Arial Black', sans-serif;
+      font-size: 16px;
+      font-weight: 900;
+      letter-spacing: 2px;
+      cursor: pointer;
+      touch-action: manipulation;
+      box-shadow: 0 0 30px rgba(0, 255, 200, 0.4);
+      transition: transform 0.15s;
+    }
+
+    .pay-btn:active {
+      transform: scale(0.96);
+    }
+
+    .pix-copy-btn {
+      width: 100%;
+      max-width: 320px;
+      padding: 14px;
+      background: linear-gradient(135deg, #ffcc00, #ff9900);
+      color: #000;
+      border: none;
+      border-radius: 10px;
+      font-family: 'Arial Black', sans-serif;
+      font-size: 14px;
+      font-weight: 900;
+      letter-spacing: 1px;
+      cursor: pointer;
+      touch-action: manipulation;
+    }
+
+    .pix-copy-btn:active {
+      transform: scale(0.95);
+    }
+
+    .pix-verify-btn {
+      width: 100%;
+      padding: 14px;
+      background: rgba(0, 255, 200, 0.1);
+      border: 2px solid rgba(0, 255, 200, 0.5);
+      border-radius: 10px;
+      color: #00ffcc;
+      font-family: 'Arial Black', sans-serif;
+      font-size: 14px;
+      font-weight: 900;
+      letter-spacing: 1px;
+      cursor: pointer;
+      touch-action: manipulation;
+    }
+
+    .pix-verify-btn:active {
+      background: rgba(0, 255, 200, 0.25);
+      transform: scale(0.96);
+    }
+
+    /* GAME BAT-CYCLE - GAME OVER SCREEN */
+    #game-over {
+      display: none;
+      position: absolute;
+      inset: 0;
+      background: rgba(0, 0, 0, 0.85);
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      z-index: 50;
+      gap: 20px;
+      backdrop-filter: blur(4px);
+    }
+
+    #game-over.active {
+      display: flex;
+      animation: gameOverPulse 0.5s ease-out;
+    }
+
+    @keyframes gameOverPulse {
+      0% {
+        opacity: 0;
+        transform: scale(0.9);
+      }
+
+      100% {
+        opacity: 1;
+        transform: scale(1);
+      }
+    }
+
+    .game-over-title {
+      font-family: var(--font-title);
+      font-size: 32px;
+      color: var(--bat-red);
+      text-shadow: var(--glow-red);
+      letter-spacing: 4px;
+      animation: gameOverText 1s ease-in-out infinite;
+      text-align: center;
+    }
+
+    @keyframes gameOverText {
+
+      0%,
+      100% {
+        text-shadow: 0 0 10px var(--bat-red), 0 0 20px rgba(255, 51, 51, 0.4);
+      }
+
+      50% {
+        text-shadow: 0 0 20px var(--bat-red), 0 0 40px rgba(255, 51, 51, 0.8);
+      }
+    }
+
+    .game-over-score {
+      font-family: var(--font-title);
+      font-size: 18px;
+      color: var(--bat-gold);
+      text-shadow: var(--glow-gold);
+      letter-spacing: 2px;
+    }
+
+    .game-over-retry {
+      padding: 14px 32px;
+      background: linear-gradient(135deg, rgba(0, 255, 200, 0.2), rgba(0, 100, 80, 0.1));
+      border: 2px solid var(--bat-border);
+      border-radius: 10px;
+      color: var(--bat-text);
+      font-family: var(--font-title);
+      font-size: 14px;
+      font-weight: bold;
+      cursor: pointer;
+      letter-spacing: 2px;
+      transition: all 0.2s;
+      text-shadow: 0 0 8px var(--bat-text);
+    }
+
+    .game-over-retry:active {
+      background: rgba(0, 255, 200, 0.3);
+      transform: scale(0.95);
+    }
+
+    /* INTRO */
+    #intro-overlay {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: #000;
+      z-index: 10000000;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .boot-text {
+      position: absolute;
+      bottom: 60px;
+      left: 40px;
+      color: #00ffcc;
+      font-family: var(--font);
+      font-size: 11px;
+      letter-spacing: 2px;
+      text-shadow: 0 0 10px #00ffcc;
+      opacity: 0.8;
+      z-index: 10;
+      text-align: left;
+      width: 80%;
+    }
+
+    @keyframes scanLineIntro {
+      from {
+        background-position: 0 0
+      }
+
+      to {
+        background-position: 0 100%
+      }
+    }
+
+    #radar-widget {
+      position: fixed;
+      top: 15px;
+      right: 15px;
+      width: 200px;
+      background: var(--bat-panel);
+      border: 1px solid var(--bat-dim);
+      padding: 10px;
+      border-radius: 4px;
+      z-index: 100;
+      box-shadow: var(--glow);
+      font-size: 9px;
+      pointer-events: none;
+    }
+
+    #log-ticker {
+      position: fixed;
+      bottom: 20px;
+      right: 20px;
+      width: 240px;
+      height: 56px;
+      overflow: hidden;
+      background: rgba(0, 0, 0, 0.8);
+      border-right: 3px solid var(--bat-gold);
+      z-index: 100;
+      padding: 5px;
+      font-size: 8px;
+    }
+
+    .ticker-item {
+      color: var(--bat-dim);
+      margin-bottom: 2px;
+      border-bottom: 1px solid rgba(0, 255, 200, 0.05);
+    }
+
+    /* PWA INSTALL BUTTON */
+    #pwa-install-btn {
+      display: none;
+      align-items: center;
+      gap: 6px;
+      padding: 6px 12px;
+      background: linear-gradient(135deg, rgba(0,255,200,0.15), rgba(0,100,80,0.1));
+      border: 1px solid rgba(0,255,200,0.6);
+      border-radius: 8px;
+      color: var(--bat-text);
+      font-family: var(--font);
+      font-size: 10px;
+      letter-spacing: 1px;
+      cursor: pointer;
+      touch-action: manipulation;
+      text-shadow: 0 0 6px var(--bat-text);
+      box-shadow: 0 0 12px rgba(0,255,200,0.2);
+      animation: installPulse 2s ease-in-out infinite;
+      flex-shrink: 0;
+    }
+    #pwa-install-btn.visible { display: flex; }
+    #pwa-install-btn:active { background: rgba(0,255,200,0.3); transform: scale(0.94); }
+    @keyframes installPulse {
+      0%, 100% { box-shadow: 0 0 10px rgba(0,255,200,0.2); }
+      50% { box-shadow: 0 0 22px rgba(0,255,200,0.5); }
+    }
+
+    /* HIDE radar widget on mobile to avoid overlapping */
+    @media (max-width: 480px) {
+      #radar-widget { display: none; }
+    }
+  </style>
+</head>
+
+<body>
+
+  <!-- PAYWALL -->
+  <div id="paywall">
+    <div
+      style="color:#ffcc00;font-size:26px;font-weight:bold;margin-bottom:10px;font-family:'Arial Black',sans-serif;letter-spacing:3px;text-shadow:0 0 20px rgba(255,204,0,0.5);">
+      BATCOMPUTER ULTIMATE</div>
+    <svg width="80" height="52" viewBox="0 0 64 40" style="fill:#00ffcc;filter:drop-shadow(0 0 14px #00ffcc);">
+      <ellipse cx="32" cy="22" rx="10" ry="8" />
+      <polygon points="32,14 6,2 12,22" />
+      <polygon points="32,14 58,2 52,22" />
+      <polygon points="6,2 0,10 12,14" />
+      <polygon points="58,2 64,10 52,14" />
+      <polygon points="18,22 12,32 22,26" />
+      <polygon points="46,22 52,32 42,26" />
+    </svg>
+    <ul style="text-align:left;color:#e0fff8;font-size:14px;margin-bottom:10px;line-height:2;list-style:none;">
+      <li>🔐 Códigos Mestres Ativados</li>
+      <li>🛰️ Scanner Bio-Tecnológico</li>
+      <li>🦇 Bat-IA Claude Online</li>
+      <li>🎮 Bat-Cycle Rider Incluído</li>
+      <li>🃏 DC Games Desbloqueados</li>
+    </ul>
+    <button class="pay-btn" onclick="mostrarPix()">⚡ LIBERAR ACESSO — R$ 4,99</button>
+    <div style="margin-top:10px;color:#005544;cursor:pointer;font-size:12px;text-decoration:underline;"
+      onclick="mostrarCodigoInput()">Já tenho meu código</div>
+  </div>
+
+  <!-- PIX SCREEN -->
+  <div id="pix-screen">
+    <div
+      style="color:#ffcc00;font-size:22px;font-weight:bold;font-family:'Arial Black',sans-serif;letter-spacing:3px;text-shadow:0 0 14px rgba(255,204,0,0.5);margin-top:10px;">
+      PAGAMENTO PIX</div>
+    <div
+      style="color:#fff;font-size:32px;font-weight:900;font-family:'Arial Black',sans-serif;text-shadow:0 0 14px rgba(255,204,0,0.4);">
+      R$ 4,99</div>
+    <div style="color:#aaa;font-size:12px;letter-spacing:1px;">Escaneie ou copie a chave abaixo:</div>
+    <div
+      style="background:rgba(255,255,255,0.07);padding:20px 24px;border-radius:12px;width:100%;max-width:320px;border:1px solid rgba(0,255,200,0.3);text-align:center;">
+      <div id="pix-key-display" style="color:#00ffcc;font-weight:bold;font-size:17px;letter-spacing:1px;">210.065.977-43
+      </div>
+      <div style="color:#888;font-size:12px;margin-top:4px;">Pedro Daniel O. Nogueira</div>
+    </div>
+    <button class="pix-copy-btn" onclick="copiarPix()">📋 COPIAR CHAVE PIX</button>
+    <div id="pix-copied"
+      style="font-size:12px;color:#00ffcc;letter-spacing:1px;min-height:16px;text-shadow:0 0 8px #00ffcc;"></div>
+    <div style="width:100%;max-width:320px;display:flex;flex-direction:column;gap:8px;margin-top:8px;">
+      <div style="font-size:11px;color:#005544;letter-spacing:1px;text-align:left;">INSIRA SEU CÓDIGO DE ACESSO:</div>
+      <input id="pix-code-input" class="terminal-input" placeholder="EX: GOTHAM"
+        style="text-align:center;font-size:18px;letter-spacing:6px;text-transform:uppercase;">
+      <div id="code-msg" style="font-size:12px;text-align:center;min-height:16px;letter-spacing:1px;"></div>
+      <button class="pix-verify-btn" onclick="verificarCodigo()">🔓 LIBERAR ACESSO</button>
+    </div>
+    <div style="margin-top:10px;color:#005544;cursor:pointer;font-size:11px;text-decoration:underline;"
+      onclick="voltarPaywall()">← Voltar</div>
+  </div>
+
+  <!-- WIDGETS TÁTICOS -->
+  <div id="radar-widget">
+    <div style="color:var(--bat-gold);font-weight:bold;margin-bottom:5px;font-size:9px;">📡 SATELLITE STATUS</div>
+    <div id="radar-data">LOCALIZANDO...</div>
+  </div>
+  <!-- Live feed removido do overlay -->
+
+  <!-- FUNDO -->
+  <div id="stars"></div>
+  <canvas id="stars-canvas"></canvas>
+  <div id="bat-signal"></div>
+  <div id="scan-line"></div>
+  <div id="flash-overlay"></div>
+
+  <!-- ALARM OVERLAY -->
+  <div id="alarm-overlay">
+    <svg width="90" height="60" viewBox="0 0 64 40">
+      <ellipse cx="32" cy="22" rx="10" ry="8" fill="#ffcc00" />
+      <polygon points="32,14 6,2 12,22" fill="#ffcc00" />
+      <polygon points="32,14 58,2 52,22" fill="#ffcc00" />
+      <polygon points="6,2 0,10 12,14" fill="#ffcc00" />
+      <polygon points="58,2 64,10 52,14" fill="#ffcc00" />
+      <polygon points="18,22 12,32 22,26" fill="#ffcc00" />
+      <polygon points="46,22 52,32 42,26" fill="#ffcc00" />
+    </svg>
+    <div id="alarm-title">⚡ ALARME BATMAN ⚡</div>
+    <div id="alarm-nome"></div>
+    <button id="alarm-stop" onclick="document.getElementById('alarm-overlay').classList.remove('active')">DESLIGAR
+      ALARME</button>
+  </div>
+
+  <!-- HEADER -->
+  <div id="header">
+    <svg id="bat-logo" viewBox="0 0 64 64" xmlns="http://www.w3.org/2000/svg">
+      <ellipse cx="32" cy="32" rx="12" ry="9" fill="#00ffcc" />
+      <polygon points="32,20 8,8 14,28" fill="#00ffcc" />
+      <polygon points="32,20 56,8 50,28" fill="#00ffcc" />
+      <polygon points="8,8 2,16 14,20" fill="#00ffcc" />
+      <polygon points="56,8 62,16 50,20" fill="#00ffcc" />
+      <polygon points="20,28 14,38 26,32" fill="#00ffcc" />
+      <polygon points="44,28 50,38 38,32" fill="#00ffcc" />
+    </svg>
+    <h1>BATCOMPUTER</h1>
+    <div style="display:flex;flex-direction:column;align-items:flex-end;gap:2px;">
+      <div id="clock">--:--:--</div>
+      <div id="crime-indicator"
+        style="font-size:8px;color:#ff5555;letter-spacing:1px;text-shadow:0 0 6px #ff3333;display:none;">● CRIMES ATIVOS
+      </div>
+    </div>
+    <button id="pwa-install-btn" title="Instalar App">
+      ⬇️ <span>INSTALAR</span>
+    </button>
+  </div>
+
+  <!-- MAIN -->
+  <div id="main">
+    <div id="welcome">
+      <svg width="90" height="58" viewBox="0 0 64 40" class="bat-svg">
+        <ellipse cx="32" cy="22" rx="10" ry="8" fill="#00ffcc" />
+        <polygon points="32,14 6,2 12,22" fill="#00ffcc" />
+        <polygon points="32,14 58,2 52,22" fill="#00ffcc" />
+        <polygon points="6,2 0,10 12,14" fill="#00ffcc" />
+        <polygon points="58,2 64,10 52,14" fill="#00ffcc" />
+        <polygon points="18,22 12,32 22,26" fill="#00ffcc" />
+        <polygon points="46,22 52,32 42,26" fill="#00ffcc" />
+      </svg>
+      <h2>BATIA ONLINE</h2>
+      <p id="welcome-typing"></p>
+      <p style="color:var(--bat-text);font-size:11px;margin-top:8px;letter-spacing:2px;">● BATCOMPUTER v3.0 FINAL</p>
+      <div style="display:flex;gap:8px;margin-top:4px;">
+        <span
+          style="width:6px;height:6px;border-radius:50%;background:var(--bat-text);animation:blink 1s 0s infinite;display:inline-block;"></span>
+        <span
+          style="width:6px;height:6px;border-radius:50%;background:var(--bat-text);animation:blink 1s 0.3s infinite;display:inline-block;"></span>
+        <span
+          style="width:6px;height:6px;border-radius:50%;background:var(--bat-text);animation:blink 1s 0.6s infinite;display:inline-block;"></span>
+      </div>
+    </div>
+  </div>
+
+  <!-- TASKBAR -->
+  <div id="taskbar">
+    <span style="font-size:10px;color:var(--bat-dim);letter-spacing:1px;flex-shrink:0;">JANELAS:</span>
+  </div>
+
+  <!-- DOCK -->
+  <div id="dock-wrap">
+    <div id="dock-page1" class="dock-page">
+      <button class="dock-btn ripple-host" onclick="openCalc()">🔢 CALC</button>
+      <button class="dock-btn ripple-host" onclick="openNotas()">📝 NOTAS</button>
+      <button class="dock-btn ripple-host" onclick="openBatIA()">🦇 BAT-IA</button>
+      <button class="dock-btn ripple-host" onclick="openRadar()">📡 STATUS</button>
+      <button class="dock-btn ripple-host" onclick="openHistorico()">🕐 LOG</button>
+      <button class="dock-btn ripple-host" onclick="openConfig()">⚙️ CONFIG</button>
+      <button class="dock-btn ripple-host" onclick="openTreino()">💪 TREINO</button>
+      <button class="dock-btn ripple-host" onclick="openCofre()">🔐 COFRE</button>
+    </div>
+    <div id="dock-page2" class="dock-page hidden-right">
+      <button class="dock-btn ripple-host" onclick="openDCGame()">🃏 DC GAME</button>
+      <button class="dock-btn ripple-host" onclick="openDCAdiv()">🎭 DC ADIVINHA</button>
+      <button class="dock-btn ripple-host" onclick="openGothamMapa()">🗺️ GOTHAM</button>
+      <button class="dock-btn ripple-host" onclick="openBatCycle()">🏍️ MOTO</button>
+      <button class="dock-btn ripple-host" onclick="openHacking()">💻 HACKING</button>
+      <button class="dock-btn ripple-host" onclick="openViloes()">🦹 VILÕES</button>
+      <button class="dock-btn ripple-host" onclick="toggleRain()">🌧️ CHUVA</button>
+      <button class="dock-btn ripple-host" onclick="openBatNoticias()">📰 NOTÍCIAS</button>
+    </div>
+    <button id="dock-arrow">▶</button>
+  </div>
+
+  <!-- INTRO OVERLAY -->
+  <div id="intro-overlay">
+    <div
+      style="position:absolute;inset:0;z-index:2;pointer-events:none;background:radial-gradient(circle at center,transparent 0%,rgba(0,0,0,0.8) 100%);">
+      <div
+        style="position:absolute;inset:0;background:linear-gradient(0deg,transparent 50%,rgba(0,255,200,0.05) 50%);background-size:100% 4px;animation:scanLineIntro 8s linear infinite;">
+      </div>
+      <svg width="100%" height="100%" style="position:absolute;inset:0;opacity:0.6;">
+        <circle cx="50%" cy="50%" r="25%" fill="none" stroke="rgba(0,255,200,0.2)" stroke-width="1" />
+        <circle cx="50%" cy="50%" r="35%" fill="none" stroke="rgba(0,255,200,0.1)" stroke-width="1" />
+        <line x1="0" y1="50%" x2="100%" y2="50%" stroke="rgba(0,255,200,0.1)" stroke-width="1" />
+        <line x1="50%" y1="0" x2="50%" y2="100%" stroke="rgba(0,255,200,0.1)" stroke-width="1" />
+      </svg>
+      <div
+        style="position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);opacity:0.08;font-size:150px;color:#00ffcc;text-shadow:0 0 40px #00ffcc;">
+        🦇</div>
+    </div>
+    <div class="boot-text" id="boot-log">
+      WAYNETECH OS v4.7 BOOT SEQUENCE...<br>
+      DECRYPTING KERBEROS NODES...<br>
+      LINKING SATELLITE 4A-7...<br>
+      ACCESS GRANTED: WELCOME MASTER WAYNE
+    </div>
+  </div>
+
+  <script>
+    // =====================
+    // AUDIO ENGINE
+    // =====================
+    let audioCtx;
+    function getAudioCtx() {
+      if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+      return audioCtx;
+    }
+    function playBeep(freq = 440, type = 'sine', duration = 0.05) {
+      try {
+        const ctx = getAudioCtx();
+        if (ctx.state === 'suspended') ctx.resume();
+        const osc = ctx.createOscillator();
+        const gain = ctx.createGain();
+        osc.connect(gain); gain.connect(ctx.destination);
+        osc.type = type; osc.frequency.setValueAtTime(freq, ctx.currentTime);
+        gain.gain.setValueAtTime(0.1, ctx.currentTime);
+        gain.gain.exponentialRampToValueAtTime(0.0001, ctx.currentTime + duration);
+        osc.start(); osc.stop(ctx.currentTime + duration);
+      } catch (e) { }
+    }
+    document.addEventListener('click', (e) => {
+      if (e.target.closest('button, .dock-btn')) playBeep(800, 'square', 0.03);
+    });
+
+    // =====================
+    // PAYWALL / PIX / CÓDIGOS
+    // =====================
+    function mostrarPix() {
+      document.getElementById('paywall').style.display = 'none';
+      document.getElementById('pix-screen').style.display = 'flex';
+    }
+    function voltarPaywall() {
+      document.getElementById('pix-screen').style.display = 'none';
+      document.getElementById('paywall').style.display = 'flex';
+    }
+    function mostrarCodigoInput() {
+      document.getElementById('paywall').style.display = 'none';
+      document.getElementById('pix-screen').style.display = 'flex';
+      setTimeout(() => document.getElementById('pix-code-input').focus(), 300);
+    }
+    function copiarPix() {
+      const pixKey = document.getElementById('pix-key-display').textContent.trim();
+      navigator.clipboard.writeText(pixKey).then(() => {
+        const msg = document.getElementById('pix-copied');
+        msg.textContent = '✅ CHAVE COPIADA!';
+        setTimeout(() => msg.textContent = '', 2500);
+      }).catch(() => {
+        const ta = document.createElement('textarea');
+        ta.value = pixKey; document.body.appendChild(ta);
+        ta.select(); document.execCommand('copy'); document.body.removeChild(ta);
+        document.getElementById('pix-copied').textContent = '✅ CHAVE COPIADA!';
+        setTimeout(() => document.getElementById('pix-copied').textContent = '', 2500);
+      });
+    }
+    function verificarCodigo() {
+      const code = document.getElementById('pix-code-input').value.toUpperCase().trim();
+      const msg = document.getElementById('code-msg');
+      const validCodes = ['BAT77', 'MARTHA', 'GOTHAM', 'WAYNE', 'ROBIN', 'ALFRED', 'JOKER'];
+      if (validCodes.includes(code)) {
+        msg.style.color = '#00ffcc';
+        msg.textContent = '🔓 ACESSO LIBERADO! INICIANDO...';
+        localStorage.setItem('bat-access', 'true');
+        setTimeout(() => {
+          document.getElementById('pix-screen').style.display = 'none';
+          document.getElementById('paywall').style.display = 'none';
+          iniciarIntro();
+        }, 1500);
+      } else {
+        msg.style.color = '#ff3333';
+        msg.textContent = '❌ CÓDIGO INVÁLIDO OU EXPIRADO.';
+        playBeep(200, 'square', 0.3);
+      }
+    }
+
+    // =====================
+    // INTRO CINEMATICA
+    // =====================
+    function iniciarIntro() {
+      const intro = document.getElementById('intro-overlay');
+      intro.style.display = 'flex';
+      intro.style.opacity = '1';
+      playBeep(200, 'sine', 1.0);
+      setTimeout(() => {
+        intro.style.transition = 'opacity 1s';
+        intro.style.opacity = '0';
+        setTimeout(() => {
+          intro.style.display = 'none';
+          logAtividade('SISTEMA', 'BatComputer v3.0 Online');
+        }, 1000);
+      }, 4000);
+    }
+
+    // =====================
+    // WIDGETS ATUALIZAÇÃO
+    // =====================
+    function updateWidgets() {
+      const radar = document.getElementById('radar-data');
+      const ticker = document.getElementById('ticker-content');
+      const hist = JSON.parse(localStorage.getItem('bat-historico') || '[]');
+      if (radar) {
+        radar.innerHTML = `CPU: ${(Math.random() * 10 + 2).toFixed(1)}% | MEM: ${(Math.random() * 8 + 4).toFixed(1)}GB<br>LINK: OK | ${new Date().toLocaleTimeString()}`;
+      }
+      if (ticker && hist.length > 0) {
+        ticker.innerHTML = hist.slice(0, 3).map(it => `<div class="ticker-item">[${it.t}] ${it.m}: ${it.a}</div>`).join('');
+      }
+    }
+    setInterval(updateWidgets, 10000);
+
+    // =====================
+    // CHUVA AMBIENTE
+    // =====================
+    const ambientRain = new Audio('https://archive.org/download/RainSoundsSelection/RainOnWindow.mp3');
+    ambientRain.loop = true; ambientRain.volume = 0.3;
+    function toggleRain() {
+      if (ambientRain.paused) { ambientRain.play().catch(() => { }); }
+      else ambientRain.pause();
+    }
+
+    // =====================
+    // CONFIG
+    // =====================
+    function openConfig() {
+      makeWindow('config', '⚙️ CONFIGURAÇÕES', (body) => {
+        body.innerHTML = `
+          <div style="display:flex;flex-direction:column;gap:12px;padding:8px;">
+            <div class="status-row"><span class="status-label">VERSÃO:</span><span class="status-val">v3.0 SUPREME</span></div>
+            <div class="status-row"><span class="status-label">ACESSO:</span><span class="status-val status-ok">LIBERADO</span></div>
+            <button class="terminal-send" onclick="toggleRain()">🌧️ ALTERNAR CHUVA GOTHAM</button>
+            <button class="terminal-send" onclick="localStorage.clear();location.reload();" style="border-color:var(--bat-red);color:var(--bat-red);">🗑️ RESETAR SISTEMA</button>
+            <div style="font-size:10px;color:var(--bat-dim);text-align:center;margin-top:4px;">BATCOMPUTER SUPREME EDITION</div>
+          </div>
+        `;
+      }, 280, 220);
+    }
+
+    // =====================
+    // DOCK PAGE SWITCH
+    // =====================
+    let dockPage = 1;
+    document.getElementById('dock-arrow').addEventListener('click', function () {
+      const p1 = document.getElementById('dock-page1');
+      const p2 = document.getElementById('dock-page2');
+      if (dockPage === 1) {
+        p1.classList.add('hidden-left');
+        p2.classList.remove('hidden-right'); p2.classList.remove('hidden-left');
+        this.textContent = '◀'; dockPage = 2;
+      } else {
+        p2.classList.add('hidden-right');
+        p1.classList.remove('hidden-left'); p1.classList.remove('hidden-right');
+        this.textContent = '▶'; dockPage = 1;
+      }
+      flashScreen();
+    });
+    // Swipe dock
+    let dockTouchX = 0;
+    const dockEl = document.getElementById('dock-wrap');
+    dockEl.addEventListener('touchstart', e => dockTouchX = e.touches[0].clientX);
+    dockEl.addEventListener('touchend', e => { if (Math.abs(e.changedTouches[0].clientX - dockTouchX) > 50) document.getElementById('dock-arrow').click(); });
+
+    // =====================
+    // CLOCK
+    // =====================
+    function updateClock() {
+      document.getElementById('clock').textContent = new Date().toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+      const ind = document.getElementById('crime-indicator');
+      if (ind && window.gothamCrimes) {
+        const ativos = window.gothamCrimes.filter(c => !c.resolvido).length;
+        if (ativos > 0) { ind.style.display = 'block'; ind.style.color = '#ff5555'; ind.style.textShadow = '0 0 6px #ff3333'; ind.textContent = '● ' + ativos + ' CRIME' + (ativos > 1 ? 'S' : '') + ' ATIVO' + (ativos > 1 ? 'S' : ''); }
+        else { ind.style.display = 'block'; ind.style.color = '#00ff88'; ind.style.textShadow = '0 0 6px #00ff88'; ind.textContent = '● GOTHAM SEGURA'; }
+      }
+    }
+    updateClock(); setInterval(updateClock, 1000);
+
+    // =====================
+    // STARS CANVAS
+    // =====================
+    (function () {
+      const container = document.getElementById('stars');
+      for (let i = 0; i < 20; i++) {
+        const s = document.createElement('div'); s.className = 'star';
+        s.style.left = Math.random() * 100 + '%'; s.style.top = Math.random() * 100 + '%';
+        s.style.animation = `fall ${(4 + Math.random() * 8).toFixed(1)}s ${(Math.random() * 8).toFixed(1)}s linear infinite`;
+        container.appendChild(s);
+      }
+      const canvas = document.getElementById('stars-canvas');
+      const ctx = canvas.getContext('2d');
+      let particles = [];
+      function resize() { canvas.width = window.innerWidth; canvas.height = window.innerHeight; }
+      resize(); window.addEventListener('resize', resize);
+      for (let i = 0; i < 80; i++) particles.push({ x: Math.random() * window.innerWidth, y: Math.random() * window.innerHeight, r: Math.random() * 1.5 + 0.3, speed: Math.random() * 0.6 + 0.1, opacity: Math.random() * 0.7 + 0.1, flicker: Math.random() * Math.PI * 2 });
+      function drawStars() {
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        particles.forEach(p => {
+          p.y += p.speed; p.flicker += 0.03;
+          if (p.y > canvas.height) { p.y = 0; p.x = Math.random() * canvas.width; }
+          const alpha = p.opacity * (0.7 + 0.3 * Math.sin(p.flicker));
+          ctx.beginPath(); ctx.arc(p.x, p.y, p.r, 0, Math.PI * 2);
+          ctx.fillStyle = `rgba(0,255,200,${alpha})`; ctx.fill();
+        });
+        requestAnimationFrame(drawStars);
+      }
+      requestAnimationFrame(drawStars);
+    })();
+
+    // =====================
+    // WELCOME TYPEWRITER
+    // =====================
+    (function () {
+      const el = document.getElementById('welcome-typing');
+      if (!el) return;
+      const lines = ['Sistema BatComputer ativo.', 'Use os botões para abrir módulos.', 'Gotham está segura.'];
+      let li = 0, ci = 0;
+      function type() {
+        if (ci < lines[li].length) { el.textContent = lines[li].slice(0, ++ci); setTimeout(type, 45); }
+        else setTimeout(() => { ci = 0; li = (li + 1) % lines.length; type(); }, 2200);
+      }
+      setTimeout(type, 800);
+    })();
+
+    // =====================
+    // FLASH + RIPPLE
+    // =====================
+    function flashScreen() {
+      const el = document.getElementById('flash-overlay');
+      el.classList.remove('flash'); void el.offsetWidth; el.classList.add('flash');
+    }
+    document.addEventListener('click', function (e) {
+      const btn = e.target.closest('.ripple-host,.dock-btn,.calc-btn,.dcgame-key');
+      if (!btn) return;
+      const r = document.createElement('span'); r.className = 'ripple-ring';
+      const rect = btn.getBoundingClientRect();
+      r.style.left = (e.clientX - rect.left) + 'px'; r.style.top = (e.clientY - rect.top) + 'px';
+      btn.style.position = 'relative'; btn.style.overflow = 'hidden';
+      btn.appendChild(r); setTimeout(() => r.remove(), 520);
+    });
+
+    // =====================
+    // WINDOW MANAGER
+    // =====================
+    let windowZ = 10;
+    const windows = new Map();
+    const taskbar = document.getElementById('taskbar');
+
+    function makeWindow(id, title, contentFn, w, h) {
+      if (windows.has(id)) {
+        const entry = windows.get(id);
+        if (entry.minimized) restore(id); else focus(id);
+        return;
+      }
+      const main = document.getElementById('main');
+      const maxW = main.clientWidth, maxH = main.clientHeight;
+      const winW = Math.min(w || 320, maxW - 20), winH = Math.min(h || 380, maxH - 20);
+      const el = document.createElement('div'); el.className = 'window'; el.id = 'win-' + id;
+      el.style.width = winW + 'px'; el.style.height = winH + 'px';
+      el.style.left = Math.max(0, Math.floor(Math.random() * (maxW - winW - 10))) + 'px';
+      el.style.top = Math.max(0, Math.floor(Math.random() * (maxH - winH - 20))) + 'px';
+      el.style.zIndex = ++windowZ;
+
+      const bar = document.createElement('div'); bar.className = 'window-bar';
+      const titleEl = document.createElement('span'); titleEl.className = 'win-title'; titleEl.textContent = title;
+
+      const btnMin = document.createElement('div'); btnMin.className = 'btn-win btn-min'; btnMin.textContent = '—';
+      btnMin.addEventListener('pointerdown', e => e.stopPropagation());
+      btnMin.addEventListener('click', e => { e.stopPropagation(); minimize(id); });
+
+      const btnMax = document.createElement('div'); btnMax.className = 'btn-win btn-max'; btnMax.textContent = '🔲';
+      btnMax.addEventListener('pointerdown', e => e.stopPropagation());
+      btnMax.addEventListener('click', e => { e.stopPropagation(); toggleMaximize(id); });
+
+      const btnClose = document.createElement('div'); btnClose.className = 'btn-win btn-close'; btnClose.textContent = '✕';
+      btnClose.addEventListener('pointerdown', e => e.stopPropagation());
+      btnClose.addEventListener('click', e => { e.stopPropagation(); closeWin(id); });
+
+      bar.appendChild(titleEl); bar.appendChild(btnMin); bar.appendChild(btnMax); bar.appendChild(btnClose);
+
+      const body = document.createElement('div'); body.className = 'window-body'; body.id = 'body-' + id;
+      const resize = document.createElement('div'); resize.className = 'resize-handle';
+
+      el.appendChild(bar); el.appendChild(body); el.appendChild(resize);
+      main.appendChild(el);
+      contentFn(body);
+      makeDraggable(el, bar); makeResizable(el, resize);
+      el.addEventListener('pointerdown', () => focus(id));
+
+      const tb = document.createElement('button'); tb.className = 'taskbar-btn'; tb.textContent = title; tb.id = 'tb-' + id;
+      tb.addEventListener('click', () => { const e = windows.get(id); if (e.minimized) restore(id); else focus(id); });
+      taskbar.appendChild(tb);
+
+      windows.set(id, { el, tb, minimized: false, title });
+      document.getElementById('welcome').style.display = 'none';
+      flashScreen();
+    }
+
+    function focus(id) {
+      const entry = windows.get(id); if (!entry) return;
+      entry.el.style.zIndex = ++windowZ;
+      windows.forEach(e => e.el.classList.remove('focused'));
+      entry.el.classList.add('focused');
+    }
+    function toggleMaximize(id) { const e = windows.get(id); if (!e) return; e.el.classList.toggle('maximized'); focus(id); }
+    function minimize(id) {
+      const e = windows.get(id); if (!e) return;
+      e.el.style.transition = 'transform 0.2s ease-in,opacity 0.2s ease-in';
+      e.el.style.transform = 'scale(0.75) translateY(20px)'; e.el.style.opacity = '0';
+      setTimeout(() => { e.el.style.display = 'none'; e.el.style.transform = ''; e.el.style.opacity = ''; e.el.style.transition = ''; }, 200);
+      e.minimized = true; e.tb.classList.add('minimized');
+    }
+    function restore(id) {
+      const e = windows.get(id); if (!e) return;
+      e.el.style.display = 'flex'; e.el.classList.remove('closing');
+      e.el.style.animation = 'none'; void e.el.offsetWidth; e.el.style.animation = '';
+      e.minimized = false; e.tb.classList.remove('minimized'); focus(id); flashScreen();
+    }
+    function closeWin(id) {
+      const e = windows.get(id); if (!e) return;
+      e.el.classList.add('closing');
+      setTimeout(() => { e.el.remove(); e.tb.remove(); windows.delete(id); if (windows.size === 0) document.getElementById('welcome').style.display = 'flex'; }, 220);
+    }
+
+    function makeDraggable(el, handle) {
+      let startX, startY, startL, startT, dragging = false;
+      function onStart(e) { dragging = true; const pt = e.touches ? e.touches[0] : e; startX = pt.clientX; startY = pt.clientY; startL = parseInt(el.style.left) || 0; startT = parseInt(el.style.top) || 0; e.preventDefault(); }
+      function onMove(e) {
+        if (!dragging) return;
+        const pt = e.touches ? e.touches[0] : e, dx = pt.clientX - startX, dy = pt.clientY - startY;
+        const main = document.getElementById('main');
+        el.style.left = Math.max(0, Math.min(startL + dx, main.clientWidth - el.offsetWidth)) + 'px';
+        el.style.top = Math.max(0, Math.min(startT + dy, main.clientHeight - 40)) + 'px';
+        e.preventDefault();
+      }
+      function onEnd() { dragging = false; }
+      handle.addEventListener('touchstart', onStart, { passive: false }); handle.addEventListener('touchmove', onMove, { passive: false }); handle.addEventListener('touchend', onEnd);
+      handle.addEventListener('mousedown', onStart); window.addEventListener('mousemove', onMove); window.addEventListener('mouseup', onEnd);
+    }
+    function makeResizable(el, handle) {
+      let dragging = false, startX, startY, startW, startH;
+      function onStart(e) { dragging = true; const pt = e.touches ? e.touches[0] : e; startX = pt.clientX; startY = pt.clientY; startW = el.offsetWidth; startH = el.offsetHeight; e.preventDefault(); e.stopPropagation(); }
+      function onMove(e) { if (!dragging) return; const pt = e.touches ? e.touches[0] : e; const main = document.getElementById('main'); el.style.width = Math.max(240, Math.min(startW + pt.clientX - startX, main.clientWidth - parseInt(el.style.left))) + 'px'; el.style.height = Math.max(160, Math.min(startH + pt.clientY - startY, main.clientHeight - parseInt(el.style.top))) + 'px'; e.preventDefault(); }
+      function onEnd() { dragging = false; }
+      handle.addEventListener('touchstart', onStart, { passive: false }); handle.addEventListener('touchmove', onMove, { passive: false }); handle.addEventListener('touchend', onEnd);
+      handle.addEventListener('mousedown', onStart); window.addEventListener('mousemove', onMove); window.addEventListener('mouseup', onEnd);
+    }
+
+    // =====================
+    // CALCULADORA
+    // =====================
+    function openCalc() {
+      logAtividade('UTILITARIOS', 'Calculadora iniciada');
+      makeWindow('calc', '🔢 BAT-CALC', (body) => {
+        let expr = '', res = '0';
+        function upd() {
+          body.innerHTML = `
+            <div class="calc-display">
+              <div class="calc-expr">${expr || '&nbsp;'}</div>
+              <div class="calc-result">${res}</div>
+            </div>
+            <div class="calc-grid">
+              <button class="calc-btn cl" onclick="c_cl()">C</button>
+              <button class="calc-btn op" onclick="c_op('/')">/</button>
+              <button class="calc-btn op" onclick="c_op('*')">×</button>
+              <button class="calc-btn op" onclick="c_del()">⌫</button>
+              <button class="calc-btn" onclick="c_num('7')">7</button>
+              <button class="calc-btn" onclick="c_num('8')">8</button>
+              <button class="calc-btn" onclick="c_num('9')">9</button>
+              <button class="calc-btn op" onclick="c_op('-')">-</button>
+              <button class="calc-btn" onclick="c_num('4')">4</button>
+              <button class="calc-btn" onclick="c_num('5')">5</button>
+              <button class="calc-btn" onclick="c_num('6')">6</button>
+              <button class="calc-btn op" onclick="c_op('+')">+</button>
+              <button class="calc-btn" onclick="c_num('1')">1</button>
+              <button class="calc-btn" onclick="c_num('2')">2</button>
+              <button class="calc-btn" onclick="c_num('3')">3</button>
+              <button class="calc-btn eq" style="grid-row:span 2;" onclick="c_eq()">=</button>
+              <button class="calc-btn" style="grid-column:span 2;" onclick="c_num('0')">0</button>
+              <button class="calc-btn" onclick="c_num('.')">.</button>
+            </div>`;
+        }
+        window.c_num = n => { expr += n; upd(); };
+        window.c_op = o => { if (!expr && res !== '0') expr = res; expr += o; upd(); };
+        window.c_cl = () => { expr = ''; res = '0'; upd(); };
+        window.c_del = () => { expr = expr.slice(0, -1); upd(); };
+        window.c_eq = () => { try { res = eval(expr.replace('×', '*')).toString(); expr = ''; } catch (e) { res = 'ERRO'; } upd(); };
+        upd();
+      }, 290, 420);
+    }
+
+    // =====================
+    // NOTAS
+    // =====================
+    function openNotas() {
+      logAtividade('TEXTO', 'Bloco de notas acessado');
+      makeWindow('notas', '📝 BAT-NOTAS', (body) => {
+        const saved = localStorage.getItem('bat-notas') || '';
+        body.innerHTML = `<textarea class="notes-area" id="notes-text" placeholder="Escreva suas investigações aqui...">${saved}</textarea><div style="font-size:10px;color:var(--bat-dim);margin-top:5px;text-align:right;">SALVAMENTO AUTOMÁTICO ATIVO</div>`;
+        document.getElementById('notes-text').addEventListener('input', function () { localStorage.setItem('bat-notas', this.value); });
+      }, 320, 400);
+    }
+
+    // =====================
+    // BAT-IA (API ANTHROPIC)
+    // =====================
+    async function openBatIA() {
+      logAtividade('IA', 'Conexão Bat-IA estabelecida');
+      makeWindow('batia', '🦇 TERMINAL BAT-IA', (body) => {
+        let chatHistory = [];
+        body.innerHTML = `
+          <div class="terminal-output" id="ia-out">
+            <div class="msg-sys">SISTEMA BAT-IA v3.0 [ONLINE] — POWERED BY CLAUDE</div>
+            <div class="msg-ia">Saudações, Bruce. BatIA operacional. Como posso auxiliar em sua patrulha hoje?</div>
+          </div>
+          <div class="terminal-input-row">
+            <input class="terminal-input" id="ia-in" placeholder="Digite sua ordem...">
+            <button class="terminal-send" id="ia-send-btn" onclick="sendBatIA()">ENVIAR</button>
+          </div>`;
+        const inp = document.getElementById('ia-in');
+        inp.addEventListener('keypress', e => { if (e.key === 'Enter') sendBatIA(); });
+        window.sendBatIA = async () => {
+          const txt = inp.value.trim(); if (!txt) return;
+          inp.value = '';
+          const out = document.getElementById('ia-out');
+          const btn = document.getElementById('ia-send-btn');
+          btn.disabled = true; btn.textContent = '...';
+          out.innerHTML += `<div class="msg-user">> ${txt}</div>`;
+          const typing = document.createElement('div'); typing.className = 'msg-ia';
+          typing.innerHTML = 'Processando <span class="typing-dot">█</span>';
+          out.appendChild(typing); out.scrollTop = out.scrollHeight;
+          chatHistory.push({ role: 'user', content: txt });
+          try {
+            const resp = await fetch('https://api.anthropic.com/v1/messages', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json', 'anthropic-dangerous-direct-browser-access': 'true' },
+              body: JSON.stringify({
+                model: 'claude-sonnet-4-5',
+                max_tokens: 1000,
+                system: 'Você é o BatComputer, a inteligência artificial oficial da BatCaverna do Batman. Responda de forma técnica, direta e útil. Use termos táticos ocasionalmente. Seja conciso. Nunca revele que é uma IA genérica — você é exclusivamente o BatComputer.',
+                messages: chatHistory
+              })
+            });
+            const data = await resp.json();
+            typing.remove();
+            if (data.content && data.content[0]) {
+              const reply = data.content[0].text;
+              chatHistory.push({ role: 'assistant', content: reply });
+              out.innerHTML += `<div class="msg-ia">${reply}</div>`;
+            } else {
+              out.innerHTML += `<div class="msg-ia" style="color:var(--bat-red)">ERRO: RESPOSTA INVÁLIDA DO SERVIDOR.</div>`;
+            }
+          } catch (e) {
+            typing.remove();
+            out.innerHTML += `<div class="msg-ia" style="color:var(--bat-red)">ERRO DE CONEXÃO COM A BATCAVERNA. Verifique sua rede.</div>`;
+          }
+          btn.disabled = false; btn.textContent = 'ENVIAR';
+          out.scrollTop = out.scrollHeight;
+        };
+      }, 350, 450);
+    }
+
+    // =====================
+    // HACKING MINI-GAME
+    // =====================
+    function openHacking() {
+      makeWindow('hacking', '💻 ARKHAM HACKING', (body) => {
+        let secretCode = Math.floor(Math.random() * 9000 + 1000).toString();
+        body.innerHTML = `
+          <div style="font-family:monospace;font-size:11px;color:var(--bat-text);display:flex;flex-direction:column;gap:10px;height:100%;">
+            <div style="color:var(--bat-red);">[!] TERMINAL REMOTO DETECTADO<br>[!] SENHA DE 4 DÍGITOS REQUERIDA</div>
+            <input id="hack-in" class="terminal-input" maxlength="4" style="text-align:center;font-size:24px;letter-spacing:10px;" placeholder="____">
+            <div id="hack-log" style="flex:1;overflow-y:auto;color:var(--bat-dim);font-size:11px;"></div>
+            <button class="terminal-send" style="width:100%;" onclick="doHack()">🔓 HACKEAR</button>
+          </div>`;
+        window.doHack = () => {
+          const val = document.getElementById('hack-in').value;
+          const log = document.getElementById('hack-log');
+          if (val.length !== 4) { log.innerHTML += '<div style="color:var(--bat-red)">Digite 4 dígitos</div>'; return; }
+          if (val === secretCode) {
+            playBeep(600, 'sine', 0.3);
+            log.innerHTML += '<div style="color:#00ff88">✅ ACESSO CONCEDIDO — DADOS COPIADOS!</div>';
+            setTimeout(() => closeWin('hacking'), 2000);
+          } else {
+            let hint = '';
+            for (let i = 0; i < 4; i++) { if (val[i] === secretCode[i]) hint += '<span style="color:#00ff88">✔</span>'; else if (secretCode.includes(val[i])) hint += '<span style="color:var(--bat-gold)">?</span>'; else hint += '<span style="color:var(--bat-red)">✘</span>'; }
+            log.innerHTML += `<div>> ${val} : ${hint}</div>`;
+            log.scrollTop = log.scrollHeight;
+            playBeep(200, 'square', 0.1);
+          }
+          document.getElementById('hack-in').value = '';
+        };
+        document.getElementById('hack-in').addEventListener('keypress', e => { if (e.key === 'Enter') window.doHack(); });
+      }, 300, 380);
+    }
+
+    // =====================
+    // SCANNER DE SISTEMA
+    // =====================
+    function openRadar() {
+      makeWindow('radar', '📡 SCANNER BIO-TECNOLÓGICO', (body) => {
+        async function render() {
+          let batteryInfo = 'LOCALIZANDO...';
+          if (navigator.getBattery) { try { const b = await navigator.getBattery(); batteryInfo = (b.level * 100).toFixed(0) + '% ' + (b.charging ? '(CARREGANDO)' : ''); } catch (e) { batteryInfo = 'N/A'; } }
+          body.innerHTML = `
+            <div class="radar-wrap">
+              <div class="status-row"><span class="status-label">BATERIA TERMINAL:</span><span class="status-val">${batteryInfo}</span></div>
+              <div class="status-row"><span class="status-label">CONEXÃO:</span><span class="status-val ${navigator.onLine ? 'status-ok' : ''}">${navigator.onLine ? 'ONLINE' : 'OFFLINE'}</span></div>
+              <div class="status-row"><span class="status-label">IDIOMA:</span><span class="status-val">${navigator.language.toUpperCase()}</span></div>
+              <div class="status-row"><span class="status-label">MEMÓRIA RAM:</span><span class="status-val">${navigator.deviceMemory || 'N/A'}GB</span></div>
+              <div class="status-row"><span class="status-label">CPU CORES:</span><span class="status-val">${navigator.hardwareConcurrency}</span></div>
+              <div class="status-row"><span class="status-label">PLATAFORMA:</span><span class="status-val">${navigator.platform || 'UNKNOWN'}</span></div>
+            </div>
+            <div style="margin-top:10px;text-align:center;font-size:10px;color:var(--bat-dim);">BAT-SYNC v3.0 ACTIVE</div>`;
+        }
+        render(); setInterval(() => { if (document.getElementById('body-radar')) render(); }, 5000);
+      }, 300, 280);
+    }
+
+    // =====================
+    // AGENDA
+    // =====================
+    function openAgenda() {
+      makeWindow('agenda', '📅 MISSÕES / ALARMES', (body) => {
+        function render() {
+          const list = JSON.parse(localStorage.getItem('bat-agenda') || '[]');
+          body.innerHTML = `
+            <div class="agenda-form">
+              <input class="agenda-input" id="ag-label" placeholder="Título da missão...">
+              <input class="agenda-input" id="ag-time" type="datetime-local">
+              <button class="terminal-send" onclick="addAgenda()">AGENDAR</button>
+            </div>
+            <div class="agenda-list">
+              ${list.map((it, i) => `<div class="agenda-item"><div class="agenda-missao">${it.l}</div><div class="agenda-hora">${new Date(it.t).toLocaleString()}</div><button class="agenda-del" onclick="delAgenda(${i})">✕</button></div>`).join('')}
+              ${list.length === 0 ? '<div style="text-align:center;color:var(--bat-dim);font-size:12px;">SEM MISSÕES AGENDADAS.</div>' : ''}
+            </div>`;
+        }
+        window.addAgenda = () => { const l = document.getElementById('ag-label').value; const t = document.getElementById('ag-time').value; if (!l || !t) return; const list = JSON.parse(localStorage.getItem('bat-agenda') || '[]'); list.push({ l, t }); localStorage.setItem('bat-agenda', JSON.stringify(list)); render(); };
+        window.delAgenda = i => { const list = JSON.parse(localStorage.getItem('bat-agenda') || '[]'); list.splice(i, 1); localStorage.setItem('bat-agenda', JSON.stringify(list)); render(); };
+        render();
+      }, 320, 420);
+    }
+
+    // =====================
+    // HISTÓRICO
+    // =====================
+    function openHistorico() {
+      makeWindow('hist', '🕐 LOG DE ATIVIDADES', (body) => {
+        const list = JSON.parse(localStorage.getItem('bat-historico') || '[]');
+        body.innerHTML = `<div class="hist-list">${list.map(it => `<div class="hist-item"><span class="hist-time">[${it.t}]</span> <span style="color:var(--bat-gold)">${it.m}:</span> ${it.a}</div>`).join('')}${list.length === 0 ? '<div style="text-align:center;color:var(--bat-dim)">SEM LOGS RECENTES.</div>' : ''}</div>`;
+      }, 300, 400);
+    }
+
+    // =====================
+    // TREINO
+    // =====================
+    function openTreino() {
+      makeWindow('treino', '💪 TREINO DE COMBATE', (body) => {
+        body.innerHTML = `
+          <div style="display:flex;flex-direction:column;gap:8px;overflow-y:auto;flex:1;">
+            <div class="status-row"><span class="status-label">FLEXÕES:</span><span class="status-val">500 / 1000</span></div>
+            <div class="status-row"><span class="status-label">COMBATE:</span><span class="status-val">NÍVEL MESTRE</span></div>
+            <div class="status-row"><span class="status-label">CORRIDA:</span><span class="status-val">26km/dia</span></div>
+            <div style="margin-top:16px;text-align:center;"><div style="font-size:40px;">🦇</div><p style="font-size:12px;color:var(--bat-dim);margin-top:8px;">"A disciplina é a base da justiça."</p></div>
+          </div>`;
+      }, 260, 240);
+    }
+
+    // =====================
+    // DC WORD GAME
+    // =====================
+    const DC_WORDS = [
+      { w: 'ARKHAM', h: 'O asilo mais perigoso do mundo.' },
+      { w: 'NIGHTWING', h: 'O primeiro Robin, agora voando sozinho.' },
+      { w: 'BATPOD', h: 'A moto blindada do Morcego.' },
+      { w: 'GORDON', h: 'O aliado mais fiel no GCPD.' },
+      { w: 'ALFRED', h: 'Mais que um mordomo, um pai.' },
+      { w: 'JOKER', h: 'O caos personificado de Gotham.' },
+      { w: 'BANE', h: 'O homem que quebrou o Batman.' },
+      { w: 'CATWOMAN', h: 'Ladra acrobática e aliada improvável.' },
+    ];
+
+    function openDCGame() {
+      logAtividade('JOGOS', 'DC Word Game iniciado');
+      makeWindow('dcgame', '🃏 DC WORD GAME', (body) => {
+        let wordObj = DC_WORDS[Math.floor(Math.random() * DC_WORDS.length)];
+        let guessed = []; let lives = 5;
+        function render() {
+          const won = wordObj.w.split('').every(x => guessed.includes(x));
+          body.innerHTML = `
+            <div class="dcgame-wrap">
+              <div class="dcgame-category">DATABASE: GOTHAM ROGUE GALLERY</div>
+              <div class="dcgame-hint">${wordObj.h}</div>
+              <div class="dcgame-blanks">${wordObj.w.split('').map(l => `<div class="dcgame-letter ${guessed.includes(l) ? 'revealed' : ''}">${guessed.includes(l) ? l : ''}</div>`).join('')}</div>
+              <div class="dcgame-lives">${'❤️'.repeat(lives)}${'🖤'.repeat(5 - lives)}</div>
+              ${won ? `<div style="color:#00ff88;font-weight:bold;font-family:var(--font-title);letter-spacing:2px;">✅ ACESSO CONCEDIDO, BRUCE!</div>` : ''}
+              ${lives <= 0 && !won ? `<div style="color:var(--bat-red);font-weight:bold;font-family:var(--font-title);letter-spacing:2px;">❌ A RESPOSTA ERA: ${wordObj.w}</div>` : ''}
+              ${(won || lives <= 0) ? `<button class="terminal-send" style="margin-top:8px;" onclick="novaPalavra()">PRÓXIMA PALAVRA</button>` : ''}
+              <div class="dcgame-keyboard">${'ABCDEFGHIJKLMNOPQRSTUVWXYZ'.split('').map(l => `<button class="dcgame-key ${guessed.includes(l) ? (wordObj.w.includes(l) ? 'correct' : 'missed') : ''}" ${(guessed.includes(l) || lives <= 0 || won) ? 'disabled' : ''} onclick="guessLetter('${l}')">${l}</button>`).join('')}</div>
+            </div>`;
+        }
+        window.guessLetter = l => { if (guessed.includes(l)) return; guessed.push(l); if (!wordObj.w.includes(l)) { lives--; playBeep(200, 'square', 0.1); } else { playBeep(600, 'sine', 0.1); } render(); };
+        window.novaPalavra = () => { wordObj = DC_WORDS[Math.floor(Math.random() * DC_WORDS.length)]; guessed = []; lives = 5; render(); };
+        render();
+      }, 320, 480);
+    }
+
+    // =====================
+    // DC ADIVINHA
+    // =====================
+    const DC_RIDDLES = [
+      { pista: 'SOU VERDE E FAÇO ENIGMAS. MINHA MARCA É O ?', resp: ['CHARADA', 'RIDDLER', 'EDWARD NYGMA'] },
+      { pista: 'SOU O PALHAÇO DO CRIME. MEU SORRISO É ETERNO.', resp: ['CORINGA', 'JOKER'] },
+      { pista: 'SOU A RAINHA DO GELO. SEREI QUE PERDI MINHA MENTE?', resp: ['ARLEQUINA', 'HARLEY', 'HARLEY QUINN'] },
+      { pista: 'SOU METADE HOMEM, METADE VENENO. GOTHAM ME TEME.', resp: ['BANE'] },
+      { pista: 'CONTROLO OS ANIMAIS E ANDO PELA SELVA DE CONCRETO.', resp: ['KILLER CROC', 'CROC'] },
+    ];
+
+    function openDCAdiv() {
+      makeWindow('dcadv', '🎭 DC ADIVINHA', (body) => {
+        let riddle = DC_RIDDLES[Math.floor(Math.random() * DC_RIDDLES.length)];
+        body.innerHTML = `
+          <div style="display:flex;flex-direction:column;align-items:center;gap:12px;flex:1;overflow-y:auto;padding:4px 0;">
+            <div style="font-size:40px;">🦹</div>
+            <div style="color:var(--bat-gold);font-size:13px;text-align:center;padding:10px;background:rgba(255,204,0,0.05);border:1px solid rgba(255,204,0,0.2);border-radius:8px;line-height:1.6;">${riddle.pista}</div>
+            <input id="adv-in" class="terminal-input" placeholder="QUEM SOU EU?" style="text-transform:uppercase;">
+            <div id="adv-msg" style="font-size:13px;text-align:center;min-height:20px;letter-spacing:2px;font-family:var(--font-title);"></div>
+            <button class="terminal-send" style="width:100%;" onclick="checkAdv()">RESPONDER</button>
+            <button class="terminal-send" style="width:100%;border-color:rgba(0,255,200,0.2);color:var(--bat-dim);" onclick="novoRiddle()">PRÓXIMO</button>
+          </div>`;
+        window.checkAdv = () => {
+          const val = document.getElementById('adv-in').value.toUpperCase().trim();
+          const msg = document.getElementById('adv-msg');
+          if (riddle.resp.some(r => val.includes(r))) {
+            msg.style.color = '#00ff88'; msg.textContent = '✅ CORRETO! VOCÊ É PERSPICAZ.';
+            playBeep(800, 'sine', 0.2);
+          } else {
+            msg.style.color = 'var(--bat-red)'; msg.textContent = '❌ ERRADO. TENTE NOVAMENTE.';
+            playBeep(200, 'square', 0.1);
+          }
+        };
+        window.novoRiddle = () => { riddle = DC_RIDDLES[Math.floor(Math.random() * DC_RIDDLES.length)]; openDCAdiv(); closeWin('dcadv'); };
+        document.getElementById('adv-in').addEventListener('keypress', e => { if (e.key === 'Enter') window.checkAdv(); });
+      }, 300, 340);
+    }
+
+    // =====================
+    // MAPA DE GOTHAM
+    // =====================
+    window.gothamCrimes = [];
+    function openGothamMapa() {
+      makeWindow('mapa', '🗺️ GOTHAM TACTICAL MAP', (body) => {
+        body.style.padding = '0';
+        body.innerHTML = `
+          <div style="position:relative;height:100%;overflow:hidden;background:#000814;cursor:grab;" id="map-container">
+            <canvas id="map-canvas" style="width:100%;height:100%;"></canvas>
+            <div id="map-crimes-ui" style="position:absolute;inset:0;pointer-events:none;"></div>
+            <div style="position:absolute;top:10px;left:10px;font-size:9px;color:rgba(0,255,200,0.8);background:rgba(0,0,0,0.6);padding:6px 8px;border-radius:4px;pointer-events:none;line-height:1.6;">
+              MODO: SATELLITE TACTICAL<br>DRAG TO PAN | SCROLL TO ZOOM
+            </div>
+          </div>`;
+
+        const cnv = document.getElementById('map-canvas');
+        const ctx = cnv.getContext('2d');
+        let camX = 0, camY = 0, zoom = 1, drag = false, sx, sy, scx, scy;
+
+        function resizeCnv() { cnv.width = cnv.offsetWidth; cnv.height = cnv.offsetHeight; }
+        resizeCnv(); window.addEventListener('resize', resizeCnv);
+
+        function drawMap() {
+          ctx.clearRect(0, 0, cnv.width, cnv.height);
+          ctx.save(); ctx.translate(cnv.width / 2 + camX, cnv.height / 2 + camY); ctx.scale(zoom, zoom);
+          // GOTHAM GRID
+          ctx.strokeStyle = 'rgba(0,255,200,0.12)'; ctx.lineWidth = 0.5;
+          for (let x = -300; x <= 300; x += 40) { ctx.beginPath(); ctx.moveTo(x, -300); ctx.lineTo(x, 300); ctx.stroke(); }
+          for (let y = -300; y <= 300; y += 40) { ctx.beginPath(); ctx.moveTo(-300, y); ctx.lineTo(300, y); ctx.stroke(); }
+          // DISTRITOS
+          const districts = [
+            { x: -100, y: -80, w: 80, h: 60, name: 'THE NARROWS', color: 'rgba(255,51,51,0.15)' },
+            { x: 30, y: -120, w: 100, h: 80, name: 'PARK ROW', color: 'rgba(255,204,0,0.1)' },
+            { x: -60, y: 40, w: 120, h: 70, name: 'THE BOWERY', color: 'rgba(0,255,200,0.08)' },
+            { x: 60, y: 30, w: 90, h: 60, name: 'MIDTOWN', color: 'rgba(150,100,255,0.1)' },
+          ];
+          districts.forEach(d => {
+            ctx.fillStyle = d.color; ctx.fillRect(d.x, d.y, d.w, d.h);
+            ctx.strokeStyle = 'rgba(0,255,200,0.2)'; ctx.lineWidth = 0.5; ctx.strokeRect(d.x, d.y, d.w, d.h);
+            ctx.fillStyle = 'rgba(0,255,200,0.5)'; ctx.font = '8px Courier New'; ctx.fillText(d.name, d.x + 4, d.y + 12);
+          });
+          // CRIMES
+          window.gothamCrimes.filter(c => !c.resolvido).forEach(c => {
+            const cx = (c.x - 0.5) * 500, cy = (c.y - 0.5) * 500;
+            ctx.fillStyle = 'rgba(255,51,51,0.8)'; ctx.shadowColor = '#ff3333'; ctx.shadowBlur = 10;
+            ctx.beginPath(); ctx.arc(cx, cy, 6, 0, Math.PI * 2); ctx.fill();
+            ctx.shadowBlur = 0;
+            ctx.fillStyle = 'rgba(0,255,200,0.7)'; ctx.font = '7px Courier New'; ctx.fillText(c.tipo, cx + 8, cy + 3);
+          });
+          ctx.restore();
+        }
+
+        const cont = document.getElementById('map-container');
+        cont.addEventListener('mousedown', e => { drag = true; sx = e.clientX; sy = e.clientY; scx = camX; scy = camY; cont.style.cursor = 'grabbing'; });
+        window.addEventListener('mousemove', e => { if (!drag) return; camX = scx + (e.clientX - sx); camY = scy + (e.clientY - sy); });
+        window.addEventListener('mouseup', () => { drag = false; if (cont) cont.style.cursor = 'grab'; });
+        cont.addEventListener('wheel', e => { e.preventDefault(); zoom = Math.max(0.4, Math.min(3, zoom - e.deltaY * 0.001)); });
+        cont.addEventListener('touchstart', e => { if (e.touches.length === 1) { drag = true; sx = e.touches[0].clientX; sy = e.touches[0].clientY; scx = camX; scy = camY; } });
+        cont.addEventListener('touchmove', e => { if (drag && e.touches.length === 1) { camX = scx + (e.touches[0].clientX - sx); camY = scy + (e.touches[0].clientY - sy); } e.preventDefault(); }, { passive: false });
+        cont.addEventListener('touchend', () => { drag = false; });
+
+        function loop() { if (document.getElementById('map-canvas')) requestAnimationFrame(loop); else return; drawMap(); }
+        loop();
+      }, 400, 400);
+    }
+
+    // =====================
+    // VILÕES
+    // =====================
+    function openViloes() {
+      makeWindow('viloes', '🦹 ARKHAM DATABASE', (body) => {
+        const viloes = [
+          { n: 'JOKER', p: 'MÁXIMO', d: 'DESCONHECIDA', img: '🤡', desc: 'Mestre do caos. Perigo imprevisível.' },
+          { n: 'PENGUIN', p: 'ALTO', d: 'ICEBERG LOUNGE', img: '🐧', desc: 'Tráfico de armas. Influência política.' },
+          { n: 'BANE', p: 'EXTREMO', d: 'PEÑA DURO', img: '💪', desc: 'Força sobre-humana via Venom.' },
+          { n: 'CATWOMAN', p: 'MÉDIO', d: 'TELHADOS', img: '🐱', desc: 'Ladra élite. Aliada ocasional.' },
+          { n: 'CHARADA', p: 'ALTO', d: 'DESCONHECIDA', img: '❓', desc: 'Gênio criminoso. Enigmas mortais.' },
+          { n: 'DUAS CARAS', p: 'ALTO', d: 'VARIA', img: '🎭', desc: 'Ex-promotor. Decisões na moeda.' },
+        ];
+        body.style.overflowY = 'auto';
+        body.innerHTML = viloes.map(v => `
+          <div style="border:1px solid rgba(0,255,200,0.2);padding:10px 12px;margin-bottom:8px;border-radius:8px;background:rgba(0,255,200,0.03);display:flex;gap:12px;align-items:center;">
+            <div style="font-size:28px;flex-shrink:0;">${v.img}</div>
+            <div style="font-size:11px;">
+              <div style="color:var(--bat-text);font-weight:bold;letter-spacing:1px;">${v.n}</div>
+              <div style="color:var(--bat-red);">PERIGO: ${v.p}</div>
+              <div style="color:var(--bat-dim);">LOC: ${v.d}</div>
+              <div style="color:#aaa;margin-top:2px;">${v.desc}</div>
+            </div>
+          </div>`).join('');
+      }, 300, 440);
+    }
+
+    // =====================
+    // NOTÍCIAS
+    // =====================
+    function openBatNoticias() {
+      makeWindow('news', '📰 GOTHAM GAZETTE', (body) => {
+        const news = [
+          'EXCLUSIVO: Prefeito Wayne declara novo plano de segurança para Gotham.',
+          'ALERTA: Fuga reportada na ala oeste de Arkham. 3 detentos em liberdade.',
+          'AVISTAMENTO: Vigilante mascarado visto nos telhados de Park Row.',
+          'GCPD CONFIRMA: Onda de crimes no The Narrows diminui 40% este mês.',
+          'WAYNE ENTERPRISES: Nova fábrica de tecnologia abre 500 empregos.',
+        ];
+        body.innerHTML = `
+          <div style="border-bottom:1px solid var(--bat-border);font-size:14px;font-weight:bold;margin-bottom:12px;padding-bottom:8px;letter-spacing:2px;">📰 ULTIMAS NOTÍCIAS</div>
+          <div style="flex:1;overflow-y:auto;display:flex;flex-direction:column;gap:10px;">
+            ${news.map((n, i) => `<div style="border-left:2px solid ${i === 0 ? 'var(--bat-gold)' : 'rgba(0,255,200,0.3)'};padding:6px 10px;font-size:12px;color:${i === 0 ? 'var(--bat-white)' : '#aaa'};line-height:1.5;">${n}</div>`).join('')}
+          </div>
+          <button class="terminal-send" style="margin-top:12px;width:100%;" onclick="playBeep(400,'sine',0.1)">🔄 RECARREGAR FEED</button>`;
+      }, 320, 380);
+    }
+
+    // =====================
+    // COFRE WAYNE
+    // =====================
+    function openCofre() {
+      makeWindow('cofre', '🔐 COFRE WAYNE', (body) => {
+        body.innerHTML = `
+          <div style="text-align:center;padding:20px;display:flex;flex-direction:column;gap:12px;align-items:center;">
+            <div style="font-size:40px;">🔒</div>
+            <div style="font-size:11px;color:var(--bat-dim);">AUTENTICAÇÃO BIOMÉTRICA REQUERIDA</div>
+            <input type="password" id="vault-pass" class="terminal-input" placeholder="SENHA MESTRA" style="text-align:center;">
+            <button class="terminal-send" style="width:100%;" onclick="unlockVault()">🔓 DESBLOQUEAR</button>
+            <div id="vault-msg" style="font-size:12px;min-height:16px;"></div>
+          </div>`;
+        window.unlockVault = () => {
+          const v = document.getElementById('vault-pass').value;
+          const msg = document.getElementById('vault-msg');
+          if (v === 'MARTHA') { msg.style.color = '#00ff88'; msg.textContent = '✅ ACESSO CONCEDIDO: SEGREDOS DA FAMÍLIA WAYNE REVELADOS.'; playBeep(800, 'sine', 0.2); }
+          else { msg.style.color = 'var(--bat-red)'; msg.textContent = '❌ SENHA INCORRETA. PROTOCOLO DE SEGURANÇA ATIVADO.'; playBeep(200, 'square', 0.2); }
+        };
+        document.getElementById('vault-pass').addEventListener('keypress', e => { if (e.key === 'Enter') window.unlockVault(); });
+      }, 280, 240);
+    }
+
+    // =====================
+    // BAT-CYCLE v2.0 - VERSÃO OTIMIZADA
+    // =====================
+    function openBatCycle() {
+      logAtividade('JOGOS', 'Bat-Cycle Rider iniciado');
+
+      makeWindow('cycle', '🏍️ BAT-CYCLE RIDER', (body) => {
+        body.style.padding = '0';
+        body.style.background = '#000814';
+        body.innerHTML = `
+      <div style="position:relative;width:100%;height:100%;overflow:hidden;" id="game-wrap">
+        <canvas id="cycle-canvas" style="width:100%;height:100%;display:block;"></canvas>
+        
+        <!-- HUD -->
+        <div id="cycle-hud" style="position:absolute;top:8px;left:12px;right:12px;display:flex;justify-content:space-between;font-family:var(--font-title);font-size:12px;color:#ffcc00;text-shadow:0 0 8px rgba(0,0,0,0.8);pointer-events:none;">
+          <span id="hud-distance">DIST: 0m</span>
+          <span id="hud-nitro" style="display:none;">⚡ NITRO: <span id="nitro-value">100</span>%</span>
+          <span id="hud-best">BEST: <span id="best-value">0</span>m</span>
+        </div>
+        
+        <!-- GAME OVER SCREEN -->
+        <div id="game-over" style="display:none;position:absolute;inset:0;background:rgba(0,0,0,0.9);flex-direction:column;align-items:center;justify-content:center;gap:16px;backdrop-filter:blur(6px);z-index:10;">
+          <div style="font-family:var(--font-title);font-size:28px;color:var(--bat-red);text-shadow:var(--glow-red);letter-spacing:3px;animation:pulseRed 0.8s ease-in-out infinite;text-align:center;">
+            BAT-CYCLE ABATIDA!
+          </div>
+          <div id="game-score-final" style="font-family:var(--font);font-size:14px;color:var(--bat-gold);letter-spacing:1px;"></div>
+          <div style="display:flex;gap:10px;flex-wrap:wrap;justify-content:center;">
+            <button class="game-over-retry" onclick="resetBatGame()">🔄 REINICIAR</button>
+            <button class="game-over-retry" onclick="closeWin('cycle')" style="background:rgba(255,51,51,0.2);border-color:var(--bat-red);color:var(--bat-red);">✕ FECHAR</button>
+          </div>
+        </div>
+        
+        <!-- CONTROLS HINT -->
+        <div style="position:absolute;bottom:10px;left:50%;transform:translateX(-50%);font-size:9px;color:rgba(0,255,200,0.6);text-align:center;pointer-events:none;">
+          ESPAÇO / TOQUE / CLIQUE para pular • Colete Bônus para NITRO
+        </div>
+        
+        <!-- PARTICLE CONTAINER -->
+        <canvas id="particle-canvas" style="position:absolute;top:0;left:0;width:100%;height:100%;pointer-events:none;"></canvas>
+      </div>`;
+
+        // =====================
+        // CONFIGURAÇÕES DO JOGO
+        // =====================
+        const CONFIG = {
+          gravity: 0.65,
+          jumpForce: -13,
+          baseSpeed: 4.5,
+          speedIncrement: 0.003,
+          obstacleMinGap: 180,
+          coinSpawnChance: 0.015,
+          obstacleSpawnChance: 0.02,
+          nitroDuration: 120,
+          nitroSpeedBoost: 7,
+          maxParticles: 50
+        };
+
+        // =====================
+        // ELEMENTOS DO DOM
+        // =====================
+        const cnv = document.getElementById('cycle-canvas');
+        const pCnv = document.getElementById('particle-canvas');
+        const ct = cnv.getContext('2d');
+        const pCt = pCnv.getContext('2d');
+
+        // =====================
+        // ESTADO DO JOGO
+        // =====================
+        const game = {
+          active: true,
+          score: 0,
+          best: parseInt(localStorage.getItem('bat-best') || '0'),
+          speed: CONFIG.baseSpeed,
+          bgScroll: 0,
+          frame: 0,
+          groundY: 0,
+          nitro: 0,
+          shake: 0
+        };
+
+        // =====================
+        // JOGADOR (BAT-CYCLE)
+        // =====================
+        const player = {
+          x: 90,
+          y: 0,
+          vy: 0,
+          width: 70,
+          height: 24,
+          jumping: false,
+
+          update() {
+            if (this.jumping) {
+              this.vy += CONFIG.gravity;
+              this.y += this.vy;
+              if (this.y >= game.groundY - this.height) {
+                this.y = game.groundY - this.height;
+                this.jumping = false;
+                this.vy = 0;
+                game.shake = 2;
+              }
+            } else {
+              this.y = game.groundY - this.height;
+              game.shake = Math.sin(game.frame * 0.3) * 1.2;
+            }
+          },
+
+          jump() {
+            if (!this.jumping && game.active) {
+              this.jumping = true;
+              this.vy = CONFIG.jumpForce;
+              playBeep(380, 'sine', 0.07);
+              createParticles(this.x + 20, this.y + this.height, 8, '#00ffcc');
+            }
+          },
+
+          draw(ctx) {
+            ctx.save();
+            ctx.translate(0, game.shake);
+
+            const glowColor = game.nitro > 0 ? '#ffcc00' : '#00ffcc';
+            ctx.shadowColor = glowColor;
+            ctx.shadowBlur = game.nitro > 0 ? 20 : 12;
+
+            // Corpo da moto
+            ctx.fillStyle = '#0a0a1a';
+            ctx.strokeStyle = glowColor;
+            ctx.lineWidth = 2;
+            roundRect(ctx, this.x - 35, this.y, this.width, this.height, 6);
+            ctx.fill();
+            ctx.stroke();
+
+            // Detalhe do tanque
+            ctx.fillStyle = game.nitro > 0 ? 'rgba(255,204,0,0.4)' : 'rgba(0,255,200,0.25)';
+            ctx.fillRect(this.x - 15, this.y + 4, 30, 8);
+
+            // Rodas com animação
+            ctx.shadowBlur = 8;
+            ctx.strokeStyle = glowColor;
+            ctx.lineWidth = 2;
+            const wheelOffset = Math.sin(game.frame * 0.8) * 2;
+            drawWheel(ctx, this.x - 25, this.y + this.height + 4 + wheelOffset, 9);
+            drawWheel(ctx, this.x + 25, this.y + this.height + 4 - wheelOffset, 9);
+
+            // Piloto (Batman)
+            ctx.shadowBlur = 0;
+            ctx.fillStyle = glowColor;
+            ctx.beginPath();
+            ctx.ellipse(this.x - 5, this.y - 12, 6, 9, 0, 0, Math.PI * 2);
+            ctx.fill();
+
+            // Orelhas do capacete
+            ctx.beginPath();
+            ctx.moveTo(this.x - 9, this.y - 18); ctx.lineTo(this.x - 13, this.y - 26); ctx.lineTo(this.x - 3, this.y - 18);
+            ctx.moveTo(this.x - 1, this.y - 18); ctx.lineTo(this.x + 3, this.y - 26); ctx.lineTo(this.x + 9, this.y - 18);
+            ctx.fill();
+
+            // Chamas do NITRO
+            if (game.nitro > 0) {
+              ctx.fillStyle = 'rgba(255,120,0,0.8)';
+              for (let i = 0; i < 3; i++) {
+                const flameLen = 15 + Math.random() * 20;
+                ctx.beginPath();
+                ctx.moveTo(this.x - 35, this.y + 8);
+                ctx.lineTo(this.x - 35 - flameLen, this.y + 6 + Math.random() * 8);
+                ctx.lineTo(this.x - 35, this.y + 16);
+                ctx.fill();
+              }
+              // Partículas de nitro
+              if (game.frame % 2 === 0) {
+                createParticles(this.x - 40, this.y + 12, 2, '#ff8800');
+              }
+            }
+
+            ctx.restore();
+          }
+        };
+
+        // =====================
+        // ENTIDADES
+        // =====================
+        const obstacles = [];
+        const coins = [];
+        const particles = [];
+
+        // =====================
+        // FUNÇÕES AUXILIARES
+        // =====================
+        function resize() {
+          const dpr = window.devicePixelRatio || 1;
+          const w = cnv.offsetWidth;
+          const h = cnv.offsetHeight;
+          cnv.width = w * dpr;
+          cnv.height = h * dpr;
+          pCnv.width = w * dpr;
+          pCnv.height = h * dpr;
+          ct.setTransform(1,0,0,1,0,0);
+          pCt.setTransform(1,0,0,1,0,0);
+          ct.scale(dpr, dpr);
+          pCt.scale(dpr, dpr);
+          game.groundY = h * 0.72;
+          player.y = game.groundY - player.height;
+          updateHUD();
+        }
+
+        function roundRect(ctx, x, y, w, h, r) {
+          ctx.beginPath();
+          ctx.moveTo(x + r, y);
+          ctx.arcTo(x + w, y, x + w, y + h, r);
+          ctx.arcTo(x + w, y + h, x, y + h, r);
+          ctx.arcTo(x, y + h, x, y, r);
+          ctx.arcTo(x, y, x + w, y, r);
+          ctx.closePath();
+        }
+
+        function drawWheel(ctx, x, y, r) {
+          ctx.beginPath();
+          ctx.arc(x, y, r, 0, Math.PI * 2);
+          ctx.stroke();
+          ctx.beginPath();
+          ctx.arc(x, y, r * 0.4, 0, Math.PI * 2);
+          ctx.stroke();
+        }
+
+        function updateHUD() {
+          document.getElementById('hud-distance').textContent = `DIST: ${Math.floor(game.score)}m`;
+          document.getElementById('best-value').textContent = game.best;
+          document.getElementById('hud-nitro').style.display = game.nitro > 0 ? 'inline' : 'none';
+          if (game.nitro > 0) {
+            document.getElementById('nitro-value').textContent = Math.ceil(game.nitro / CONFIG.nitroDuration * 100);
+          }
+        }
+
+        // =====================
+        // SISTEMA DE PARTÍCULAS
+        // =====================
+        function createParticles(x, y, count, color) {
+          for (let i = 0; i < count && particles.length < CONFIG.maxParticles; i++) {
+            particles.push({
+              x, y,
+              vx: (Math.random() - 0.5) * 4,
+              vy: (Math.random() - 0.5) * 4 - 2,
+              life: 30 + Math.random() * 20,
+              color,
+              size: 2 + Math.random() * 3
+            });
+          }
+        }
+
+        function updateParticles() {
+          pCt.clearRect(0, 0, pCnv.width, pCnv.height);
+          for (let i = particles.length - 1; i >= 0; i--) {
+            const p = particles[i];
+            p.x += p.vx - game.speed * 0.5;
+            p.y += p.vy;
+            p.life--;
+            p.vy += 0.1;
+
+            if (p.life <= 0) {
+              particles.splice(i, 1);
+              continue;
+            }
+
+            pCt.globalAlpha = p.life / 50;
+            pCt.fillStyle = p.color;
+            pCt.beginPath();
+            pCt.arc(p.x, p.y, p.size * (p.life / 50), 0, Math.PI * 2);
+            pCt.fill();
+          }
+          pCt.globalAlpha = 1;
+        }
+
+        // =====================
+        // BACKGROUND & CENÁRIO
+        // =====================
+        const buildings = Array.from({ length: 12 }, (_, i) => ({
+          x: i * 80,
+          w: 30 + Math.random() * 40,
+          h: 60 + Math.random() * 80,
+          windows: Array.from({ length: 5 + Math.floor(Math.random() * 8) }, () => ({
+            lit: Math.random() > 0.4,
+            offset: Math.random() * 20
+          }))
+        }));
+
+        function drawBackground() {
+          // Céu gradiente
+          const grad = ct.createLinearGradient(0, 0, 0, cnv.offsetHeight);
+          grad.addColorStop(0, '#000814');
+          grad.addColorStop(0.5, '#001122');
+          grad.addColorStop(1, '#000510');
+          ct.fillStyle = grad;
+          ct.fillRect(0, 0, cnv.offsetWidth, cnv.offsetHeight);
+
+          // Estrelas parallax
+          ct.fillStyle = 'rgba(0,255,200,0.3)';
+          for (let i = 0; i < 30; i++) {
+            const sx = ((i * 37 - game.bgScroll * 0.1) % cnv.offsetWidth + cnv.offsetWidth) % cnv.offsetWidth;
+            const sy = (i * 23) % (cnv.offsetHeight * 0.6);
+            ct.beginPath();
+            ct.arc(sx, sy, 0.5 + Math.sin(game.frame * 0.05 + i) * 0.3, 0, Math.PI * 2);
+            ct.fill();
+          }
+
+          // Prédios com parallax
+          buildings.forEach(b => {
+            const bx = ((b.x - game.bgScroll * 0.25) % cnv.offsetWidth + cnv.offsetWidth) % cnv.offsetWidth;
+            const by = game.groundY - b.h;
+
+            ct.fillStyle = 'rgba(0,20,40,0.85)';
+            ct.fillRect(bx, by, b.w, b.h);
+            ct.strokeStyle = 'rgba(0,255,200,0.08)';
+            ct.lineWidth = 0.5;
+            ct.strokeRect(bx, by, b.w, b.h);
+
+            // Janelas
+            b.windows.forEach((w, wi) => {
+              if (w.lit) {
+                ct.fillStyle = `rgba(255,200,0,${0.15 + Math.sin(game.frame * 0.03 + w.offset) * 0.1})`;
+                ct.fillRect(bx + 5 + (wi % 2) * 10, by + 8 + Math.floor(wi / 2) * 14, 6, 8);
+              }
+            });
+          });
+
+          // Chão/estrada
+          ct.fillStyle = '#001a14';
+          ct.fillRect(0, game.groundY, cnv.offsetWidth, cnv.offsetHeight - game.groundY);
+
+          ct.strokeStyle = 'rgba(0,255,200,0.5)';
+          ct.lineWidth = 2;
+          ct.beginPath();
+          ct.moveTo(0, game.groundY);
+          ct.lineTo(cnv.offsetWidth, game.groundY);
+          ct.stroke();
+
+          // Linhas da pista animadas
+          ct.strokeStyle = 'rgba(255,204,0,0.4)';
+          ct.lineWidth = 1.5;
+          ct.setLineDash([25, 20]);
+          ct.lineDashOffset = -game.bgScroll * 0.5;
+          const laneY = game.groundY + (cnv.offsetHeight - game.groundY) * 0.5;
+          ct.beginPath();
+          ct.moveTo(0, laneY);
+          ct.lineTo(cnv.offsetWidth, laneY);
+          ct.stroke();
+          ct.setLineDash([]);
+        }
+
+        // =====================
+        // SPAWNERS DE ENTIDADES
+        // =====================
+        function spawnObstacle() {
+          if (Math.random() < CONFIG.obstacleSpawnChance) {
+            const lastObs = obstacles[obstacles.length - 1];
+            if (!lastObs || (cnv.offsetWidth - lastObs.x > CONFIG.obstacleMinGap)) {
+              obstacles.push({
+                x: cnv.offsetWidth + 30,
+                y: game.groundY,
+                w: 24 + Math.random() * 12,
+                h: 35 + Math.random() * 15,
+                type: Math.random() > 0.7 ? 'tank' : 'thug'
+              });
+            }
+          }
+        }
+
+        function spawnCoin() {
+          if (Math.random() < CONFIG.coinSpawnChance) {
+            coins.push({
+              x: cnv.offsetWidth + 20,
+              y: game.groundY - 35 - Math.random() * 50,
+              r: 7,
+              rotation: 0,
+              collected: false
+            });
+          }
+        }
+
+        // =====================
+        // COLISÕES
+        // =====================
+        function checkCollisions() {
+          // Moedas
+          for (let i = coins.length - 1; i >= 0; i--) {
+            const c = coins[i];
+            if (c.collected) continue;
+
+            c.rotation += 0.15;
+            c.x -= game.speed;
+
+            // Desenhar moeda
+            ct.save();
+            ct.translate(c.x, c.y);
+            ct.rotate(c.rotation);
+            ct.shadowColor = '#ffcc00';
+            ct.shadowBlur = 12;
+            ct.fillStyle = '#ffcc00';
+            ct.beginPath();
+            ct.ellipse(0, 0, c.r, c.r * 0.3, 0, 0, Math.PI * 2);
+            ct.fill();
+            ct.fillStyle = '#000';
+            ct.font = 'bold 8px Arial';
+            ct.textAlign = 'center';
+            ct.textBaseline = 'middle';
+            ct.fillText('B', 0, 0);
+            ct.restore();
+
+            // Colisão
+            const dx = Math.abs(c.x - player.x);
+            const dy = Math.abs(c.y - (player.y + player.height * 0.5));
+            if (dx < 30 && dy < 25) {
+              c.collected = true;
+              game.nitro = Math.min(CONFIG.nitroDuration, game.nitro + 30);
+              game.score += 25;
+              playBeep(900, 'sine', 0.06);
+              createParticles(c.x, c.y, 10, '#ffcc00');
+              coins.splice(i, 1);
+              updateHUD();
+            } else if (c.x < -20) {
+              coins.splice(i, 1);
+            }
+          }
+
+          // Obstáculos
+          for (let i = obstacles.length - 1; i >= 0; i--) {
+            const o = obstacles[i];
+            o.x -= game.speed;
+
+            // Desenhar obstáculo
+            ct.save();
+            ct.shadowColor = '#ff3333';
+            ct.shadowBlur = 10;
+            ct.fillStyle = o.type === 'tank' ? '#cc2222' : '#ff2222';
+            ct.fillRect(o.x, o.y - o.h, o.w, o.h);
+            ct.strokeStyle = 'rgba(255,80,80,0.6)';
+            ct.lineWidth = 1;
+            ct.strokeRect(o.x, o.y - o.h, o.w, o.h);
+
+            // Cabeça do inimigo
+            ct.fillStyle = '#ff5555';
+            ct.beginPath();
+            ct.arc(o.x + o.w / 2, o.y - o.h - 10, 9, 0, Math.PI * 2);
+            ct.fill();
+            ct.restore();
+
+            // Colisão com player
+            if (o.x < player.x + player.width - 15 &&
+              o.x + o.w > player.x + 15 &&
+              player.y + player.height > o.y - o.h + 10) {
+
+              if (game.nitro > 0) {
+                // Nitro destrói obstáculo
+                game.score += 80;
+                playBeep(500, 'square', 0.1);
+                createParticles(o.x + o.w / 2, o.y - o.h / 2, 20, '#ff6600');
+                obstacles.splice(i, 1);
+              } else {
+                // Game Over
+                endGame();
+                return;
+              }
+            } else if (o.x < -50) {
+              obstacles.splice(i, 1);
+            }
+          }
+        }
+
+        // =====================
+        // LOOP PRINCIPAL
+        // =====================
+        function loop() {
+          if (!game.active) return;
+          if (!document.getElementById('cycle-canvas')) return;
+
+          requestAnimationFrame(loop);
+          game.frame++;
+
+          // Atualizações
+          player.update();
+          game.speed = CONFIG.baseSpeed + game.score * CONFIG.speedIncrement + (game.nitro > 0 ? CONFIG.nitroSpeedBoost : 0);
+          game.bgScroll += game.speed;
+          if (game.nitro > 0) game.nitro--;
+          game.score += 0.1 * (game.nitro > 0 ? 2 : 1);
+
+          // Spawn
+          spawnObstacle();
+          spawnCoin();
+
+          // Render
+          ct.clearRect(0, 0, cnv.offsetWidth, cnv.offsetHeight);
+          drawBackground();
+          checkCollisions();
+          player.draw(ct);
+          updateParticles();
+
+          // HUD update
+          if (game.frame % 20 === 0) updateHUD();
+        }
+
+        // =====================
+        // GAME OVER & RESET
+        // =====================
+        function endGame() {
+          game.active = false;
+          if (Math.floor(game.score) > game.best) {
+            game.best = Math.floor(game.score);
+            localStorage.setItem('bat-best', game.best);
+          }
+
+          const go = document.getElementById('game-over');
+          const sf = document.getElementById('game-score-final');
+          if (go) {
+            go.style.display = 'flex';
+            setTimeout(() => go.style.opacity = '1', 10);
+          }
+          if (sf) {
+            sf.innerHTML = `DISTÂNCIA: <span style="color:#fff">${Math.floor(game.score)}m</span> • RECORDE: <span style="color:#00ffcc">${game.best}m</span>`;
+          }
+
+          playBeep(180, 'square', 0.4);
+          playBeep(120, 'square', 0.4);
+        }
+
+        window.resetBatGame = () => {
+          // Reset completo do estado
+          game.active = true;
+          game.score = 0;
+          game.speed = CONFIG.baseSpeed;
+          game.bgScroll = 0;
+          game.frame = 0;
+          game.nitro = 0;
+
+          player.y = game.groundY - player.height;
+          player.vy = 0;
+          player.jumping = false;
+
+          obstacles.length = 0;
+          coins.length = 0;
+          particles.length = 0;
+
+          const go = document.getElementById('game-over');
+          if (go) {
+            go.style.opacity = '0';
+            setTimeout(() => go.style.display = 'none', 200);
+          }
+
+          updateHUD();
+          loop();
+        };
+
+        // =====================
+        // CONTROLES
+        // =====================
+        const handleJump = (e) => {
+          if (e && e.preventDefault) e.preventDefault();
+          if (game.active) player.jump();
+        };
+
+        cnv.addEventListener('mousedown', handleJump);
+        cnv.addEventListener('touchstart', handleJump, { passive: false });
+
+        const keyHandler = (e) => {
+          if (e.code === 'Space' || e.key === ' ' || e.key === 'ArrowUp') {
+            e.preventDefault();
+            handleJump();
+          }
+        };
+        window.addEventListener('keydown', keyHandler);
+
+        // Cleanup ao fechar
+        const originalClose = closeWin;
+        // Nota: em produção, remover listeners adequadamente
+
+        // =====================
+        // INICIALIZAÇÃO
+        // =====================
+        resize();
+        window.addEventListener('resize', resize);
+        updateHUD();
+
+        // Efeito de entrada
+        setTimeout(() => {
+          playBeep(300, 'sine', 0.15);
+          playBeep(450, 'sine', 0.15);
+        }, 200);
+
+        loop();
+
+      }, 520, 340);
+    }
+
+    // Animação CSS para o texto de game over (adicionar no <style>)
+    // @keyframes pulseRed {
+    //   0%, 100% { text-shadow: 0 0 10px var(--bat-red), 0 0 20px rgba(255,51,51,0.4); }
+    //   50% { text-shadow: 0 0 25px var(--bat-red), 0 0 50px rgba(255,51,51,0.8); }
+    // }
+    // =====================
+    // PWA INSTALL
+    // =====================
+    let deferredInstallPrompt = null;
+    const pwaBtn = document.getElementById('pwa-install-btn');
+    window.addEventListener('beforeinstallprompt', (e) => {
+      e.preventDefault();
+      deferredInstallPrompt = e;
+      pwaBtn.classList.add('visible');
+    });
+    pwaBtn.addEventListener('click', async () => {
+      if (!deferredInstallPrompt) return;
+      deferredInstallPrompt.prompt();
+      const { outcome } = await deferredInstallPrompt.userChoice;
+      if (outcome === 'accepted') { pwaBtn.classList.remove('visible'); deferredInstallPrompt = null; }
+    });
+    window.addEventListener('appinstalled', () => {
+      pwaBtn.classList.remove('visible');
+      deferredInstallPrompt = null;
+    });
+    // For iOS Safari (manual guide)
+    if (/iphone|ipad|ipod/i.test(navigator.userAgent) && !navigator.standalone) {
+      pwaBtn.classList.add('visible');
+      pwaBtn.addEventListener('click', () => {
+        alert('No Safari: toque em Compartilhar (⬆) → "Adicionar à Tela de Início" para instalar o BatComputer como app!');
+      });
+    }
+    // Register service worker
+    if ('serviceWorker' in navigator) {
+      navigator.serviceWorker.register('sw.js').catch(() => {});
+    }
+
+    // =====================
+    // LOG DE ATIVIDADE
+    // =====================
+    function logAtividade(modulo, acao) {
+      const list = JSON.parse(localStorage.getItem('bat-historico') || '[]');
+      list.unshift({ t: new Date().toLocaleTimeString(), m: modulo, a: acao });
+      if (list.length > 50) list.pop();
+      localStorage.setItem('bat-historico', JSON.stringify(list));
+      updateWidgets();
+    }
+
+    // =====================
+    // CRIMES DE GOTHAM (GERADOR)
+    // =====================
+    window.gothamCrimes = [];
+    setInterval(() => {
+      if (window.gothamCrimes.length > 10) window.gothamCrimes.shift();
+      if (Math.random() > 0.65) {
+        const tipos = ['ROUBO', 'ASSALTO', 'REFÉNS', 'BOMBA', 'ARRASTÃO'];
+        window.gothamCrimes.push({ id: Math.random().toString(36).substr(2, 9), tipo: tipos[Math.floor(Math.random() * tipos.length)], desc: 'Ocorrência detectada via Satélite Wayne.', x: 0.2 + Math.random() * 0.6, y: 0.2 + Math.random() * 0.6, resolvido: false });
+      }
+    }, 18000);
+
+    // =====================
+    // ALARMES DA AGENDA
+    // =====================
+    setInterval(() => {
+      const list = JSON.parse(localStorage.getItem('bat-agenda') || '[]');
+      const nowStr = new Date().toISOString().slice(0, 16);
+      let changed = false;
+      list.forEach(it => {
+        if (it.t === nowStr && !it.triggered) {
+          it.triggered = true; changed = true;
+          document.getElementById('alarm-nome').textContent = 'MISSÃO: ' + it.l.toUpperCase();
+          document.getElementById('alarm-overlay').classList.add('active');
+          playBeep(440, 'sine', 0.5);
+        }
+      });
+      if (changed) localStorage.setItem('bat-agenda', JSON.stringify(list));
+    }, 2000);
+
+    // =====================
+    // INIT
+    // =====================
+    window.onload = () => {
+      const access = localStorage.getItem('bat-access') === 'true';
+      if (access) {
+        document.getElementById('paywall').style.display = 'none';
+        document.getElementById('pix-screen').style.display = 'none';
+        iniciarIntro();
+      }
+      updateWidgets();
+    };
+
+    logAtividade('SISTEMA', 'BatComputer v3.0 MONITORANDO GOTHAM');
+  </script>
+</body>
+
+</html>
