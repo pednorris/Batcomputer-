@@ -1,0 +1,21 @@
+{
+  "name": "BatComputer Ultimate Edition",
+  "short_name": "BatComputer",
+  "start_url": "./",
+  "display": "standalone",
+  "background_color": "#000000",
+  "theme_color": "#00ffcc",
+  "description": "Sistema de Vigilância Tático da Wayne Enterprises v7.0",
+  "icons": [
+    {
+      "src": "https://i.imgur.com/B70pGfK.png",
+      "sizes": "192x192",
+      "type": "image/png"
+    },
+    {
+      "src": "https://i.imgur.com/B70pGfK.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    }
+  ]
+}
