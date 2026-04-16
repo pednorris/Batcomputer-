@@ -19,9 +19,12 @@ export default function Checkout({ productId, onComplete }: CheckoutProps) {
   const [error, setError] = useState<string | null>(null)
 
   const startCheckoutSessionForProduct = useCallback(
-    async () => {
+    async (): Promise<string> => {
       try {
         const clientSecret = await startCheckoutSession(productId)
+        if (!clientSecret) {
+          throw new Error('Failed to get client secret')
+        }
         return clientSecret
       } catch (err) {
         setError('Erro ao iniciar checkout. Tente novamente.')
@@ -54,7 +57,7 @@ export default function Checkout({ productId, onComplete }: CheckoutProps) {
       <EmbeddedCheckoutProvider
         stripe={stripePromise}
         options={{ 
-          clientSecret: startCheckoutSessionForProduct,
+          fetchClientSecret: startCheckoutSessionForProduct,
           onComplete: handleComplete,
         }}
       >
