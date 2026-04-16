@@ -68,7 +68,7 @@ export default function Paywall({ onAccessGranted }: PaywallProps) {
         </div>
         
         <div className="text-white text-2xl font-black mb-4" style={{ fontFamily: 'Arial Black, sans-serif', textShadow: '0 0 14px rgba(255,204,0,0.4)' }}>
-          R$ 4,99
+          R$ 5,00
         </div>
 
         <div className="w-full max-w-md mb-4">
@@ -120,7 +120,7 @@ export default function Paywall({ onAccessGranted }: PaywallProps) {
         className="w-full max-w-xs py-4 px-6 bg-gradient-to-r from-[#00ffcc] to-[#00cc99] text-black border-none rounded-xl font-black text-base tracking-widest cursor-pointer transition-transform active:scale-95"
         style={{ fontFamily: 'Arial Black, sans-serif', boxShadow: '0 0 30px rgba(0, 255, 200, 0.4)' }}
       >
-        ⚡ LIBERAR ACESSO — R$ 4,99
+        LIBERAR ACESSO — R$ 5,00
       </button>
 
       <div className="text-xs text-[#006655] mt-4 text-center max-w-xs">
