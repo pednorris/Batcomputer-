@@ -1,0 +1,88 @@
+@import "tailwindcss";
+
+:root {
+  --bat-bg: #000000;
+  --bat-bg-deep: #050505;
+  --bat-panel: rgba(5, 5, 10, 0.98);
+  --bat-panel-light: rgba(10, 10, 20, 0.95);
+  --bat-border: #00aa88;
+  --bat-text: #00ddaa;
+  --bat-text-bright: #00ffcc;
+  --bat-dim: #003322;
+  --bat-gold: #ffcc00;
+  --bat-red: #ff2222;
+  --bat-gray: #0a0a12;
+  --bat-dark: #020204;
+  --bat-white: #e0fff8;
+  --bat-purple: #7722cc;
+  --font: 'Courier New', 'Lucida Console', monospace;
+  --font-title: 'Arial Black', 'Impact', sans-serif;
+  --glow: 0 0 8px var(--bat-text), 0 0 20px rgba(0, 220, 170, 0.3);
+  --glow-gold: 0 0 8px var(--bat-gold), 0 0 20px rgba(255, 204, 0, 0.3);
+  --glow-red: 0 0 8px var(--bat-red), 0 0 20px rgba(255, 30, 30, 0.3);
+}
+
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+  -webkit-tap-highlight-color: transparent;
+}
+
+html {
+  background: #000000;
+}
+
+body {
+  background: var(--bat-bg);
+  color: var(--bat-text);
+  font-family: var(--font);
+  min-height: 100dvh;
+  overflow-x: hidden;
+}
+
+@keyframes pulse {
+  0%, 100% {
+    text-shadow: 0 0 8px var(--bat-text), 0 0 16px rgba(0, 220, 170, 0.25);
+  }
+  50% {
+    text-shadow: 0 0 20px var(--bat-text), 0 0 40px rgba(0, 220, 170, 0.35);
+  }
+}
+
+@keyframes batFloat {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-6px); }
+}
+
+@keyframes blink {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0; }
+}
+
+@keyframes scanLine {
+  0% { transform: translateY(-100%); }
+  100% { transform: translateY(100%); }
+}
+
+@keyframes typing {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.3; }
+}
+
+::-webkit-scrollbar {
+  width: 4px;
+}
+
+::-webkit-scrollbar-track {
+  background: var(--bat-dark);
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--bat-dim);
+  border-radius: 2px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: var(--bat-text);
+}
