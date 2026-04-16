@@ -1,0 +1,59 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --bat-bg: #010108;
+  --bat-panel: rgba(8, 10, 24, 0.98);
+  --bat-border: #00ffcc;
+  --bat-text: #00ffce;
+  --bat-dim: #004438;
+  --bat-gold: #ffcc00;
+  --bat-red: #ff3333;
+  --bat-gray: #1a1a2e;
+  --bat-white: #f0fffb;
+  --bat-purple: #9944ff;
+  --font: 'Courier New', 'Lucida Console', monospace;
+  --font-title: 'Arial Black', 'Impact', sans-serif;
+  --glow: 0 0 10px var(--bat-text), 0 0 25px rgba(0, 255, 206, 0.4);
+  --glow-gold: 0 0 10px var(--bat-gold), 0 0 25px rgba(255, 204, 0, 0.35);
+  --glow-red: 0 0 10px var(--bat-red), 0 0 25px rgba(255, 51, 51, 0.4);
+}
+
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+  -webkit-tap-highlight-color: transparent;
+}
+
+body {
+  background: var(--bat-bg);
+  color: var(--bat-text);
+  font-family: var(--font);
+  min-height: 100dvh;
+  overflow-x: hidden;
+}
+
+@keyframes pulse {
+  0%, 100% {
+    text-shadow: 0 0 10px var(--bat-text), 0 0 20px rgba(0, 255, 200, 0.3);
+  }
+  50% {
+    text-shadow: 0 0 30px var(--bat-text), 0 0 60px rgba(0, 255, 200, 0.4);
+  }
+}
+
+@keyframes batFloat {
+  0%, 100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-8px);
+  }
+}
+
+@keyframes blink {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0; }
+}
